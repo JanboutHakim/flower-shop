@@ -47,7 +47,7 @@ function Navbar() {
             onClick={() => navigate("home")}
             style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10, zIndex: 1001 }}
           >
-           <img src="/logo.png" alt="Logo" style={{ height: isMobile ? 60 : 128, width: isMobile ? 60 : 128, objectFit: "contain" }} />
+           <img src="/logo.png" alt="Logo" style={{ height: isMobile ? 128 : 128, width: isMobile ? 128 : 128, objectFit: "contain" }} />
          
           </div>
 
