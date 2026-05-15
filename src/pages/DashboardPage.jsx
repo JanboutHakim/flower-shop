@@ -1,13 +1,15 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FaArrowLeft,
   FaBoxOpen,
+  FaClipboardList,
   FaDownload,
   FaEye,
   FaImage,
   FaPlus,
   FaSave,
   FaSyncAlt,
+  FaTrash,
 } from "react-icons/fa";
 import { useApp } from "../contexts/AppContext";
 import { useAllOrders } from "../hooks/useDatabase";
@@ -17,6 +19,14 @@ import {
   createProduct,
   createRibbon,
   createWrap,
+  deleteCard,
+  deleteProduct,
+  deleteRibbon,
+  deleteWrap,
+  getCards,
+  getProducts,
+  getRibbons,
+  getWraps,
   updateOrder,
 } from "../lib/supabase";
 import { uploadToCloudinary } from "../lib/cloudinary";
@@ -101,7 +111,7 @@ function DashboardPage() {
         await refetch();
       } catch (error) {
         console.error("Error updating order:", error);
-        alert("Failed to update order");
+        alert(error.message || "Failed to update order");
       }
     },
     [refetch]
@@ -217,7 +227,7 @@ function DashboardHeader({ activeTab, setActiveTab }) {
         <TabButton
           active={activeTab === "catalog"}
           icon={<FaPlus />}
-          label="Add catalog"
+          label="Catalog"
           onClick={() => setActiveTab("catalog")}
         />
       </div>
@@ -642,37 +652,102 @@ function OrderItem({ item }) {
 }
 
 function CatalogManager({ categories, refetchProducts }) {
+  const [catalog, setCatalog] = useState({
+    products: [],
+    ribbons: [],
+    wraps: [],
+    cards: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [actionError, setActionError] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
+
+  const loadCatalog = useCallback(async () => {
+    try {
+      setLoading(true);
+      setActionError("");
+      const [products, ribbons, wraps, cards] = await Promise.all([
+        getProducts(),
+        getRibbons(),
+        getWraps(),
+        getCards(),
+      ]);
+
+      setCatalog({ products, ribbons, wraps, cards });
+    } catch (err) {
+      console.error("Error loading catalog:", err);
+      setActionError(err.message || "Failed to load catalog.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCatalog();
+  }, [loadCatalog]);
+
+  const handleDeleted = useCallback(
+    async (message) => {
+      setActionMessage(message);
+      await loadCatalog();
+      await refetchProducts();
+    },
+    [loadCatalog, refetchProducts]
+  );
+
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
-        gap: 20,
-        alignItems: "start",
-      }}
-    >
-      <ProductForm categories={categories} refetchProducts={refetchProducts} />
-      <div style={{ display: "grid", gap: 20 }}>
-        <OptionForm
-          kind="ribbon"
-          title="Add ribbon"
-          helper="Adds a ribbon option to the product customizer."
-          includeColor
-          createItem={createRibbon}
+    <div>
+      {actionError && <Notice tone="error">{actionError}</Notice>}
+      {actionMessage && <Notice tone="success">{actionMessage}</Notice>}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
+          gap: 20,
+          alignItems: "start",
+          marginBottom: 20,
+        }}
+      >
+        <ProductForm
+          categories={categories}
+          refetchProducts={async () => {
+            await refetchProducts();
+            await loadCatalog();
+          }}
         />
-        <OptionForm
-          kind="wrap"
-          title="Add wrapping"
-          helper="Adds a wrapping option to the product customizer."
-          createItem={createWrap}
-        />
-        <OptionForm
-          kind="card"
-          title="Add card"
-          helper="Adds a card shape or design to the product customizer."
-          createItem={createCard}
-        />
+        <div style={{ display: "grid", gap: 20 }}>
+          <OptionForm
+            kind="ribbon"
+            title="Add ribbon"
+            helper="Adds a ribbon option to the product customizer."
+            includeColor
+            createItem={createRibbon}
+            onSaved={loadCatalog}
+          />
+          <OptionForm
+            kind="wrap"
+            title="Add wrapping"
+            helper="Adds a wrapping option to the product customizer."
+            createItem={createWrap}
+            onSaved={loadCatalog}
+          />
+          <OptionForm
+            kind="card"
+            title="Add card"
+            helper="Adds a card shape or design to the product customizer."
+            createItem={createCard}
+            onSaved={loadCatalog}
+          />
+        </div>
       </div>
+
+      <CatalogLists
+        catalog={catalog}
+        loading={loading}
+        onDeleted={handleDeleted}
+        setActionError={setActionError}
+      />
     </div>
   );
 }
@@ -831,7 +906,7 @@ function ProductForm({ categories, refetchProducts }) {
   );
 }
 
-function OptionForm({ createItem, helper, includeColor = false, kind, title }) {
+function OptionForm({ createItem, helper, includeColor = false, kind, onSaved, title }) {
   const [form, setForm] = useState(blankOption);
   const [imageFile, setImageFile] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -871,6 +946,7 @@ function OptionForm({ createItem, helper, includeColor = false, kind, title }) {
         setForm(blankOption);
         setImageFile(null);
         setMessage(`${title} saved. The image URL was stored in Supabase.`);
+        await onSaved?.();
       } catch (err) {
         console.error(`Error adding ${kind}:`, err);
         setError(err.message || `Failed to add ${kind}.`);
@@ -878,7 +954,7 @@ function OptionForm({ createItem, helper, includeColor = false, kind, title }) {
         setSaving(false);
       }
     },
-    [createItem, form, imageFile, includeColor, kind, title]
+    [createItem, form, imageFile, includeColor, kind, onSaved, title]
   );
 
   return (
@@ -939,6 +1015,185 @@ function OptionForm({ createItem, helper, includeColor = false, kind, title }) {
 
       <SaveArea error={error} message={message} saving={saving} label="Save" />
     </form>
+  );
+}
+
+function CatalogLists({ catalog, loading, onDeleted, setActionError }) {
+  if (loading) {
+    return <EmptyState>Loading catalog...</EmptyState>;
+  }
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
+        gap: 20,
+      }}
+    >
+      <DeleteList
+        title="Products"
+        items={catalog.products}
+        getTitle={(item) => item.name_en || item.name_ar || `Product #${item.id}`}
+        getSubtitle={(item) => `${item.category || "No category"} - ${formatCurrency(item.price)}`}
+        getImage={(item) => item.image_url}
+        deleteItem={deleteProduct}
+        onDeleted={() => onDeleted("Product deleted.")}
+        setActionError={setActionError}
+      />
+      <DeleteList
+        title="Ribbons"
+        items={catalog.ribbons}
+        getTitle={(item) => item.label_en || item.label_ar || `Ribbon #${item.id}`}
+        getSubtitle={(item) => item.color || "No color"}
+        getImage={(item) => item.image_url}
+        deleteItem={deleteRibbon}
+        onDeleted={() => onDeleted("Ribbon deleted.")}
+        setActionError={setActionError}
+      />
+      <DeleteList
+        title="Wrapping"
+        items={catalog.wraps}
+        getTitle={(item) => item.label_en || item.label_ar || `Wrap #${item.id}`}
+        getSubtitle={(item) => `Sort order: ${item.sort_order || 0}`}
+        getImage={(item) => item.image_url}
+        deleteItem={deleteWrap}
+        onDeleted={() => onDeleted("Wrapping deleted.")}
+        setActionError={setActionError}
+      />
+      <DeleteList
+        title="Cards"
+        items={catalog.cards}
+        getTitle={(item) => item.label_en || item.label_ar || `Card #${item.id}`}
+        getSubtitle={(item) => `Sort order: ${item.sort_order || 0}`}
+        getImage={(item) => item.image_url}
+        deleteItem={deleteCard}
+        onDeleted={() => onDeleted("Card deleted.")}
+        setActionError={setActionError}
+      />
+    </div>
+  );
+}
+
+function DeleteList({
+  deleteItem,
+  getImage,
+  getSubtitle,
+  getTitle,
+  items,
+  onDeleted,
+  setActionError,
+  title,
+}) {
+  const [deletingId, setDeletingId] = useState(null);
+
+  const handleDelete = useCallback(
+    async (item) => {
+      const itemTitle = getTitle(item);
+      const confirmed = window.confirm(`Delete "${itemTitle}"? This cannot be undone.`);
+      if (!confirmed) return;
+
+      try {
+        setActionError("");
+        setDeletingId(item.id);
+        await deleteItem(item.id);
+        await onDeleted();
+      } catch (err) {
+        console.error(`Error deleting ${title}:`, err);
+        setActionError(err.message || `Failed to delete ${itemTitle}.`);
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    [deleteItem, getTitle, onDeleted, setActionError, title]
+  );
+
+  return (
+    <div style={PANEL_STYLE}>
+      <h2
+        style={{
+          color: C.accent,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          fontSize: 20,
+          marginBottom: 14,
+        }}
+      >
+        <FaClipboardList /> {title}
+      </h2>
+
+      {items.length === 0 ? (
+        <p style={{ color: C.secondary, fontSize: 13 }}>No items found.</p>
+      ) : (
+        <div style={{ display: "grid", gap: 10 }}>
+          {items.map((item) => (
+            <div
+              key={item.id}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "48px 1fr auto",
+                gap: 10,
+                alignItems: "center",
+                background: C.bg,
+                border: `1px solid ${C.border}`,
+                borderRadius: 6,
+                padding: 10,
+              }}
+            >
+              {getImage(item) ? (
+                <img
+                  src={getImage(item)}
+                  alt={getTitle(item)}
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 4,
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 4,
+                    background: C.bgEl,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: C.secondary,
+                    fontSize: 12,
+                  }}
+                >
+                  #{item.id}
+                </div>
+              )}
+              <div style={{ minWidth: 0 }}>
+                <div style={{ color: C.cream, fontWeight: 700, wordBreak: "break-word" }}>
+                  {getTitle(item)}
+                </div>
+                <div style={{ color: C.secondary, fontSize: 12, marginTop: 3 }}>
+                  {getSubtitle(item)}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleDelete(item)}
+                disabled={deletingId === item.id}
+                style={{
+                  ...dangerButtonStyle(),
+                  opacity: deletingId === item.id ? 0.6 : 1,
+                  cursor: deletingId === item.id ? "wait" : "pointer",
+                }}
+              >
+                <FaTrash /> {deletingId === item.id ? "Deleting" : "Delete"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1175,6 +1430,23 @@ function greenButtonStyle(overrides = {}) {
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    fontWeight: 800,
+    ...overrides,
+  };
+}
+
+function dangerButtonStyle(overrides = {}) {
+  return {
+    padding: "8px 11px",
+    background: "rgba(255,107,107,.14)",
+    color: "#ff8a8a",
+    border: "1px solid rgba(255,107,107,.35)",
+    borderRadius: 4,
+    cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
     fontWeight: 800,
     ...overrides,
   };

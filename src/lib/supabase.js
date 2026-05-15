@@ -108,6 +108,31 @@ export async function createRibbon(ribbonData) {
   return data[0];
 }
 
+export async function getRibbons() {
+  const { data, error } = await supabase
+    .from('ribbons')
+    .select('*')
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching ribbons:', error);
+    return [];
+  }
+  return data;
+}
+
+export async function deleteRibbon(id) {
+  const { error } = await supabase
+    .from('ribbons')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting ribbon:', error);
+    throw error;
+  }
+}
+
 export async function createWrap(wrapData) {
   const { data, error } = await supabase
     .from('wraps')
@@ -121,6 +146,31 @@ export async function createWrap(wrapData) {
   return data[0];
 }
 
+export async function getWraps() {
+  const { data, error } = await supabase
+    .from('wraps')
+    .select('*')
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching wraps:', error);
+    return [];
+  }
+  return data;
+}
+
+export async function deleteWrap(id) {
+  const { error } = await supabase
+    .from('wraps')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting wrap:', error);
+    throw error;
+  }
+}
+
 export async function createCard(cardData) {
   const { data, error } = await supabase
     .from('cards')
@@ -132,6 +182,31 @@ export async function createCard(cardData) {
     throw error;
   }
   return data[0];
+}
+
+export async function getCards() {
+  const { data, error } = await supabase
+    .from('cards')
+    .select('*')
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching cards:', error);
+    return [];
+  }
+  return data;
+}
+
+export async function deleteCard(id) {
+  const { error } = await supabase
+    .from('cards')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting card:', error);
+    throw error;
+  }
 }
 
 // ============= THEMES =============
@@ -228,6 +303,13 @@ export async function updateOrder(id, updates) {
     console.error('Error updating order:', error);
     throw error;
   }
+
+  if (!data?.length) {
+    throw new Error(
+      'Order was not updated. Check Supabase RLS UPDATE policy for the orders table.'
+    );
+  }
+
   return data[0];
 }
 
