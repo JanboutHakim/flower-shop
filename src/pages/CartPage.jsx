@@ -3,6 +3,7 @@ import { useApp } from "../contexts/AppContext";
 import { C, FS } from "../constants/theme";
 import Section from "../components/ui/Section";
 import Tag from "../components/ui/Tag";
+import { formatCurrency } from "../constants/options";
 
 function CartPage() {
   const { tr, navigate, cart, removeFromCart, cartTotal, lang, isMobile } = useApp();
@@ -67,7 +68,7 @@ function CartPage() {
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontFamily: FS, fontSize: "1.2rem", color: C.accent }}>
-                      ${item.price * item.qty}
+                      {formatCurrency(item.price * item.qty)}
                     </div>
                     <div style={{ color: C.creamD, fontSize: ".78rem" }}>×{item.qty}</div>
                   </div>
@@ -114,7 +115,7 @@ function CartPage() {
                   <span>
                     {item.name[lang]} ×{item.qty}
                   </span>
-                  <span>${item.price * item.qty}</span>
+                  <span>{formatCurrency(item.price * item.qty)}</span>
                 </div>
               ))}
               <div style={{ height: 1, background: C.border, margin: "20px 0" }} />
@@ -129,7 +130,7 @@ function CartPage() {
                 <span
                   style={{ fontFamily: FS, fontSize: "1.5rem", color: C.accent }}
                 >
-                  ${cartTotal}
+                  {formatCurrency(cartTotal)}
                 </span>
               </div>
               <button

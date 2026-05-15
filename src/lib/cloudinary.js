@@ -1,5 +1,5 @@
-const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
-const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
+const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME?.trim();
+const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET?.trim();
 
 if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
   console.error('Missing Cloudinary environment variables');
@@ -11,6 +11,14 @@ if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
  * @returns {Promise<string>} - Cloudinary image URL
  */
 export async function uploadToCloudinary(file) {
+  if (!file) {
+    throw new Error('No file selected for upload.');
+  }
+
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+    throw new Error('Cloudinary is not configured. Check REACT_APP_CLOUDINARY_CLOUD_NAME and REACT_APP_CLOUDINARY_UPLOAD_PRESET.');
+  }
+
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
@@ -24,11 +32,17 @@ export async function uploadToCloudinary(file) {
       }
     );
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error(`Upload failed: ${response.statusText}`);
+      const cloudinaryMessage = data?.error?.message || response.statusText;
+      const presetHint =
+        cloudinaryMessage.toLowerCase().includes('upload preset not found')
+          ? ` Check that an unsigned upload preset named "${CLOUDINARY_UPLOAD_PRESET}" exists in Cloudinary cloud "${CLOUDINARY_CLOUD_NAME}", then restart the React dev server.`
+          : '';
+      throw new Error(`Cloudinary upload failed: ${cloudinaryMessage}.${presetHint}`);
     }
 
-    const data = await response.json();
     return data.secure_url;
   } catch (error) {
     console.error('Error uploading to Cloudinary:', error);

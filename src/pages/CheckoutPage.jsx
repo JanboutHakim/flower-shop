@@ -1,12 +1,98 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
+import QRCode from "qrcode";
 import { useApp } from "../contexts/AppContext";
-import { C, FS } from "../constants/theme";
+import { C } from "../constants/theme";
 import Section from "../components/ui/Section";
 import Tag from "../components/ui/Tag";
 import { useOrder } from "../hooks/useDatabase";
 import { updateOrder } from "../lib/supabase";
 import { sendOrderToWhatsApp } from "../lib/whatsapp";
+import { uploadToCloudinary } from "../lib/cloudinary";
+import {
+  DELIVERY_FEE,
+  SHAM_CASH_ACCOUNT_NUMBER,
+  SHAM_CASH_QR_TEXT,
+  formatCurrency,
+} from "../constants/options";
 import { FaWhatsapp } from "react-icons/fa";
+
+const PAYMENT_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const PAYMENT_IMAGE_MAX_SIZE = 8 * 1024 * 1024;
+
+const COPY = {
+  en: {
+    requiredError: "Please fill in all required fields.",
+    deliveryAddressError: "Please add an address for delivery.",
+    paymentImageRequired: "Please attach the Sham Cash payment image.",
+    paymentImageType: "Please attach a JPG, PNG, or WebP payment image.",
+    paymentImageSize: "Payment image must be smaller than 8 MB.",
+    uploadQrError: "Failed to generate Sham Cash QR:",
+    successTitle: "Order Received!",
+    successText: "Your order has been saved and sent to WhatsApp.",
+    orderId: "Order ID",
+    orderDetails: "Order Details",
+    fullName: "Full Name",
+    phone: "Phone Number",
+    city: "City",
+    address: "Delivery Address",
+    deliveryDate: "Delivery Date",
+    deliveryTime: "Delivery Time",
+    notes: "Additional Notes",
+    addDelivery: "Add delivery",
+    deliveryFee: "Delivery fee",
+    paymentMethod: "Payment Method",
+    cash: "Cash on delivery",
+    shamCash: "Sham Cash",
+    downloadQr: "Download QR",
+    account: "Account",
+    shamCashHelp:
+      "Pay with Sham Cash, then attach a screenshot of the payment. The image will upload to Cloudinary and save on the order.",
+    attached: "Attached",
+    saving: "Saving...",
+    send: "Send Order via WhatsApp",
+    summary: "Order Summary",
+    subtotal: "Subtotal",
+    delivery: "Delivery",
+    total: "Total:",
+    none: "-",
+  },
+  ar: {
+    requiredError: "يرجى تعبئة جميع الحقول المطلوبة.",
+    deliveryAddressError: "يرجى إضافة العنوان للتوصيل.",
+    paymentImageRequired: "يرجى إرفاق صورة دفع شام كاش.",
+    paymentImageType: "يرجى إرفاق صورة بصيغة JPG أو PNG أو WebP.",
+    paymentImageSize: "يجب أن تكون صورة الدفع أصغر من 8 ميغابايت.",
+    uploadQrError: "فشل إنشاء رمز شام كاش:",
+    successTitle: "تم استلام الطلب!",
+    successText: "تم حفظ طلبك وإرساله إلى واتساب.",
+    orderId: "رقم الطلب",
+    orderDetails: "تفاصيل الطلب",
+    fullName: "الاسم الكامل",
+    phone: "رقم الهاتف",
+    city: "المدينة",
+    address: "عنوان التوصيل",
+    deliveryDate: "تاريخ التوصيل",
+    deliveryTime: "وقت التوصيل",
+    notes: "ملاحظات إضافية",
+    addDelivery: "إضافة توصيل",
+    deliveryFee: "رسوم التوصيل",
+    paymentMethod: "طريقة الدفع",
+    cash: "الدفع عند الاستلام",
+    shamCash: "شام كاش",
+    downloadQr: "تحميل الرمز",
+    account: "الحساب",
+    shamCashHelp:
+      "ادفع عبر شام كاش، ثم أرفق لقطة شاشة لعملية الدفع. سيتم رفع الصورة إلى Cloudinary وحفظها مع الطلب.",
+    attached: "تم إرفاق",
+    saving: "جار الحفظ...",
+    send: "إرسال الطلب عبر واتساب",
+    summary: "ملخص الطلب",
+    subtotal: "المجموع الفرعي",
+    delivery: "التوصيل",
+    total: "المجموع:",
+    none: "-",
+  },
+};
 
 /* ============================================================
    INPUT COMPONENT
@@ -52,12 +138,12 @@ const Inp = ({
 
 function CheckoutPage() {
   const {
-    tr,
     cart,
     cartTotal,
     lang,
     isMobile,
   } = useApp();
+  const copy = COPY[lang] || COPY.en;
 
   const { createOrder, loading: orderLoading } =
     useOrder();
@@ -70,12 +156,36 @@ function CheckoutPage() {
     date: "",
     time: "",
     notes: "",
+    deliveryRequested: false,
+    paymentMethod: "cash",
   });
 
   const [submitted, setSubmitted] =
     useState(false);
+  const [savedOrderId, setSavedOrderId] = useState(null);
 
   const [error, setError] = useState(null);
+  const [paymentImage, setPaymentImage] = useState(null);
+  const [paymentImageError, setPaymentImageError] = useState("");
+  const [qrDataUrl, setQrDataUrl] = useState("");
+
+  const finalTotal = useMemo(
+    () => cartTotal + (form.deliveryRequested ? DELIVERY_FEE : 0),
+    [cartTotal, form.deliveryRequested]
+  );
+
+  useEffect(() => {
+    QRCode.toDataURL(SHAM_CASH_QR_TEXT, {
+      width: 320,
+      margin: 2,
+      color: {
+        dark: "#0a0806",
+        light: "#ffffff",
+      },
+    })
+      .then(setQrDataUrl)
+      .catch((err) => console.error(copy.uploadQrError, err));
+  }, [copy.uploadQrError]);
 
   const set = useCallback((k, v) => {
     setForm((prev) => ({
@@ -97,10 +207,30 @@ function CheckoutPage() {
         !form.city
       ) {
         setError(
-          "Please fill in all required fields"
+          copy.requiredError
         );
         return;
       }
+
+      if (form.deliveryRequested && !form.address) {
+        setError(copy.deliveryAddressError);
+        return;
+      }
+
+      if (form.paymentMethod === "sham_cash" && !paymentImage) {
+        setError(copy.paymentImageRequired);
+        return;
+      }
+
+      if (form.paymentMethod === "sham_cash" && paymentImageError) {
+        setError(paymentImageError);
+        return;
+      }
+
+      const paymentReceiptUrl =
+        form.paymentMethod === "sham_cash" && paymentImage
+          ? await uploadToCloudinary(paymentImage)
+          : null;
 
       const orderItems = cart.map((item) => ({
         product_id: item.id,
@@ -129,7 +259,12 @@ function CheckoutPage() {
 
         items: orderItems,
 
-        total: cartTotal,
+        subtotal: cartTotal,
+        delivery_requested: form.deliveryRequested,
+        delivery_fee: form.deliveryRequested ? DELIVERY_FEE : 0,
+        payment_method: form.paymentMethod,
+        payment_receipt_url: paymentReceiptUrl,
+        total: finalTotal,
 
         status: "pending",
 
@@ -139,6 +274,7 @@ function CheckoutPage() {
       const savedOrder = await createOrder(
         orderData
       );
+      setSavedOrderId(savedOrder.id);
 
       await updateOrder(savedOrder.id, {
         whatsapp_sent: true,
@@ -146,8 +282,14 @@ function CheckoutPage() {
 
       sendOrderToWhatsApp(
         cart,
-        cartTotal,
-        form
+        finalTotal,
+        {
+          ...form,
+          subtotal: cartTotal,
+          deliveryFee: form.deliveryRequested ? DELIVERY_FEE : 0,
+          paymentReceiptUrl,
+          orderId: savedOrder.id,
+        }
       );
 
       setSubmitted(true);
@@ -159,7 +301,47 @@ function CheckoutPage() {
           "Failed to submit order."
       );
     }
-  }, [form, cart, cartTotal, createOrder]);
+  }, [
+    form,
+    cart,
+    cartTotal,
+    finalTotal,
+    paymentImage,
+    paymentImageError,
+    copy,
+    createOrder,
+  ]);
+
+  const downloadQr = useCallback(() => {
+    if (!qrDataUrl) return;
+    const a = document.createElement("a");
+    a.href = qrDataUrl;
+    a.download = "sham-cash-qr.png";
+    a.click();
+  }, [qrDataUrl]);
+
+  const handlePaymentImageChange = useCallback((file) => {
+    setPaymentImageError("");
+
+    if (!file) {
+      setPaymentImage(null);
+      return;
+    }
+
+    if (!PAYMENT_IMAGE_TYPES.includes(file.type)) {
+      setPaymentImage(null);
+      setPaymentImageError(copy.paymentImageType);
+      return;
+    }
+
+    if (file.size > PAYMENT_IMAGE_MAX_SIZE) {
+      setPaymentImage(null);
+      setPaymentImageError(copy.paymentImageSize);
+      return;
+    }
+
+    setPaymentImage(file);
+  }, [copy.paymentImageSize, copy.paymentImageType]);
 
   /* ============================================================
      SUCCESS
@@ -195,7 +377,7 @@ function CheckoutPage() {
                 color: C.accent,
               }}
             >
-              ✅ Order Received!
+              {copy.successTitle}
             </h2>
 
             <p
@@ -207,8 +389,7 @@ function CheckoutPage() {
                 color: C.cream,
               }}
             >
-              Your order has been saved and sent to
-              WhatsApp.
+              {copy.successText}
             </p>
 
             <p
@@ -217,13 +398,13 @@ function CheckoutPage() {
                 color: C.secondary,
               }}
             >
-              Order ID:{" "}
+              {copy.orderId}:{" "}
               <strong
                 style={{
                   color: C.accent,
                 }}
               >
-                {form.phone}
+                #{savedOrderId}
               </strong>
             </p>
           </div>
@@ -258,7 +439,7 @@ function CheckoutPage() {
         }}
       >
         <Tag>
-          {tr.orderDetails || "Order Details"}
+          {copy.orderDetails}
         </Tag>
 
         {/* ERROR */}
@@ -325,7 +506,7 @@ function CheckoutPage() {
             >
               <Inp
                 label={
-                  tr.fullName || "Full Name"
+                  copy.fullName
                 }
                 required
                 value={form.name}
@@ -336,7 +517,7 @@ function CheckoutPage() {
               />
 
               <Inp
-                label={tr.phone || "Phone"}
+                label={copy.phone}
                 type="tel"
                 required
                 value={form.phone}
@@ -347,7 +528,7 @@ function CheckoutPage() {
               />
 
               <Inp
-                label={tr.city || "City"}
+                label={copy.city}
                 required
                 value={form.city}
                 onChange={(e) =>
@@ -357,7 +538,7 @@ function CheckoutPage() {
               />
 
               <Inp
-                label={tr.address || "Address"}
+                label={copy.address}
                 value={form.address}
                 onChange={(e) =>
                   set("address", e.target.value)
@@ -367,8 +548,7 @@ function CheckoutPage() {
 
               <Inp
                 label={
-                  tr.delivDate ||
-                  "Delivery Date"
+                  copy.deliveryDate
                 }
                 type="date"
                 value={form.date}
@@ -380,8 +560,7 @@ function CheckoutPage() {
 
               <Inp
                 label={
-                  tr.delivTime ||
-                  "Delivery Time"
+                  copy.deliveryTime
                 }
                 type="time"
                 value={form.time}
@@ -390,6 +569,219 @@ function CheckoutPage() {
                 }
                 disabled={orderLoading}
               />
+            </div>
+
+            {/* DELIVERY */}
+            <div
+              style={{
+                background: "rgba(201,149,108,.06)",
+                border: `1px solid ${C.border}`,
+                borderRadius: 8,
+                padding: 16,
+                marginBottom: 18,
+              }}
+            >
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  color: C.cream,
+                  marginBottom: 8,
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={form.deliveryRequested}
+                  onChange={(e) =>
+                    set("deliveryRequested", e.target.checked)
+                  }
+                  disabled={orderLoading}
+                />
+                {copy.addDelivery}
+              </label>
+              <div style={{ color: C.secondary, fontSize: 13 }}>
+                {copy.deliveryFee}: {formatCurrency(DELIVERY_FEE)}
+              </div>
+            </div>
+
+            {/* PAYMENT */}
+            <div
+              style={{
+                background: C.bg,
+                border: `1px solid ${C.border}`,
+                borderRadius: 8,
+                padding: 16,
+                marginBottom: 18,
+              }}
+            >
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 12,
+                  color: C.cream,
+                }}
+              >
+                {copy.paymentMethod}
+              </label>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+                  gap: 10,
+                  marginBottom: form.paymentMethod === "sham_cash" ? 16 : 0,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => set("paymentMethod", "cash")}
+                  disabled={orderLoading}
+                  style={{
+                    padding: "11px",
+                    background:
+                      form.paymentMethod === "cash"
+                        ? "rgba(201,149,108,.18)"
+                        : "transparent",
+                    border: `1px solid ${
+                      form.paymentMethod === "cash" ? C.accent : C.border
+                    }`,
+                    color:
+                      form.paymentMethod === "cash" ? C.accent : C.creamD,
+                    cursor: "pointer",
+                    borderRadius: 4,
+                  }}
+                >
+                  {copy.cash}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => set("paymentMethod", "sham_cash")}
+                  disabled={orderLoading}
+                  style={{
+                    padding: "11px",
+                    background:
+                      form.paymentMethod === "sham_cash"
+                        ? "rgba(201,149,108,.18)"
+                        : "transparent",
+                    border: `1px solid ${
+                      form.paymentMethod === "sham_cash"
+                        ? C.accent
+                        : C.border
+                    }`,
+                    color:
+                      form.paymentMethod === "sham_cash"
+                        ? C.accent
+                        : C.creamD,
+                    cursor: "pointer",
+                    borderRadius: 4,
+                  }}
+                >
+                  {copy.shamCash}
+                </button>
+              </div>
+
+              {form.paymentMethod === "sham_cash" && (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobile ? "1fr" : "170px 1fr",
+                    gap: 16,
+                    alignItems: "start",
+                  }}
+                >
+                  <div>
+                    {qrDataUrl && (
+                      <img
+                        src={qrDataUrl}
+                        alt="Sham Cash QR"
+                        style={{
+                          width: "100%",
+                          maxWidth: 170,
+                          background: "#fff",
+                          padding: 8,
+                          borderRadius: 6,
+                        }}
+                      />
+                    )}
+                    <button
+                      type="button"
+                      onClick={downloadQr}
+                      className="btn-s"
+                      style={{
+                        marginTop: 8,
+                        padding: "8px 10px",
+                        width: "100%",
+                        fontSize: ".72rem",
+                      }}
+                    >
+                      {copy.downloadQr}
+                    </button>
+                  </div>
+
+                  <div>
+                    <div
+                      style={{
+                        color: C.cream,
+                        fontWeight: 700,
+                        marginBottom: 8,
+                      }}
+                    >
+                      {copy.account}: {SHAM_CASH_ACCOUNT_NUMBER}
+                    </div>
+                    <p
+                      style={{
+                        color: C.secondary,
+                        fontSize: 13,
+                        lineHeight: 1.6,
+                        marginBottom: 12,
+                      }}
+                    >
+                      {copy.shamCashHelp}
+                    </p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        handlePaymentImageChange(e.target.files?.[0] || null)
+                      }
+                      disabled={orderLoading}
+                      style={{
+                        width: "100%",
+                        color: C.cream,
+                        border: `1px solid ${C.border}`,
+                        padding: 10,
+                        borderRadius: 4,
+                        background: "rgba(255,255,255,.04)",
+                      }}
+                    />
+                    {paymentImageError && (
+                      <div
+                        style={{
+                          color: "#ff8a8a",
+                          fontSize: 12,
+                          marginTop: 8,
+                        }}
+                      >
+                        {paymentImageError}
+                      </div>
+                    )}
+                    {paymentImage && !paymentImageError && (
+                      <div
+                        style={{
+                          color: C.secondary,
+                          fontSize: 12,
+                          marginTop: 8,
+                        }}
+                      >
+                        {copy.attached}: {paymentImage.name}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* NOTES */}
@@ -403,8 +795,7 @@ function CheckoutPage() {
                   color: C.cream,
                 }}
               >
-                {tr.notes ||
-                  "Additional Notes"}
+                {copy.notes}
               </label>
 
               <textarea
@@ -461,8 +852,8 @@ function CheckoutPage() {
               <FaWhatsapp size={18} />
 
               {orderLoading
-                ? "Saving..."
-                : "Send Order via WhatsApp"}
+                ? copy.saving
+                : copy.send}
             </button>
           </div>
 
@@ -493,7 +884,7 @@ function CheckoutPage() {
                 color: C.cream,
               }}
             >
-              Order Summary
+              {copy.summary}
             </h3>
 
             <div
@@ -551,10 +942,7 @@ function CheckoutPage() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      $
-                      {(
-                        item.price * item.qty
-                      ).toFixed(2)}
+                      {formatCurrency(item.price * item.qty)}
                     </span>
                   </div>
 
@@ -594,6 +982,34 @@ function CheckoutPage() {
               ))}
             </div>
 
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 10,
+                color: C.creamD,
+                fontSize: 14,
+              }}
+            >
+              <span>{copy.subtotal}</span>
+              <span>{formatCurrency(cartTotal)}</span>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 16,
+                color: C.creamD,
+                fontSize: 14,
+              }}
+            >
+              <span>{copy.delivery}</span>
+              <span>
+                {form.deliveryRequested ? formatCurrency(DELIVERY_FEE) : copy.none}
+              </span>
+            </div>
+
             {/* TOTAL */}
             <div
               style={{
@@ -613,14 +1029,14 @@ function CheckoutPage() {
                 color: C.cream,
               }}
             >
-              <span>Total:</span>
+              <span>{copy.total}</span>
 
               <span
                 style={{
                   color: C.accent,
                 }}
               >
-                ${cartTotal.toFixed(2)}
+                {formatCurrency(finalTotal)}
               </span>
             </div>
           </div>

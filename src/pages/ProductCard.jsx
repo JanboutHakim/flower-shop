@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { useApp } from "../contexts/AppContext";
 import { C, FS } from "../constants/theme";
+import { formatCurrency } from "../constants/options";
 
 function ProductCard({ product, delay = 0, categories }) {
   const { tr, lang, addToCart, navigate, setSelectedProduct } = useApp();
@@ -114,7 +115,7 @@ function ProductCard({ product, delay = 0, categories }) {
               fontWeight: 600,
             }}
           >
-            ${product.price}
+            {formatCurrency(product.price)}
           </span>
           <button
             className="btn-p"

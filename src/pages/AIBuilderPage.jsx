@@ -8,7 +8,10 @@ import {
   COLOR_OPTS,
   RIBBON_OPTS,
   WRAP_OPTS,
+  formatCurrency,
 } from "../constants/options";
+
+const AI_BOUQUET_PRICE = 70000;
 
 function AIBuilderPage() {
   const { tr, addToCart, isMobile } = useApp();
@@ -184,7 +187,7 @@ Professional luxury bouquet design.
           en: "Custom AI Bouquet",
           ar: "باقة ذكاء اصطناعي",
         },
-        price: 70,
+        price: AI_BOUQUET_PRICE,
         icon: "🌸",
         category: "custom",
         count: 1,
@@ -655,7 +658,7 @@ Professional luxury bouquet design.
                         marginTop: 10,
                       }}
                     >
-                      $70
+                      {formatCurrency(AI_BOUQUET_PRICE)}
                     </div>
                   </div>
 

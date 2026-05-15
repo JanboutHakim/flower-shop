@@ -6,11 +6,50 @@ import { useMobile } from "../hooks/useMobile";
 
 const AppContext = createContext(null);
 
+const PAGE_PATHS = {
+  home: "/",
+  shop: "/shop",
+  product: "/product",
+  "ai-builder": "/ai-builder",
+  "ai-image": "/ai-image",
+  "card-builder": "/card-builder",
+  cart: "/cart",
+  checkout: "/checkout",
+  dashboard: "/dashboard",
+  "dashboard-login": "/dashboard",
+};
+
+const PATH_PAGES = {
+  "/": "home",
+  "/shop": "shop",
+  "/product": "product",
+  "/ai-builder": "ai-builder",
+  "/ai-image": "ai-image",
+  "/card-builder": "card-builder",
+  "/cart": "cart",
+  "/checkout": "checkout",
+  "/dashboard": "dashboard",
+};
+
+function pageFromPath(pathname, isAuthed) {
+  const cleanPath = pathname.replace(/\/$/, "") || "/";
+  const pathPage = PATH_PAGES[cleanPath] || "home";
+  return pathPage === "dashboard" && !isAuthed ? "dashboard-login" : pathPage;
+}
+
+function updateBrowserPath(nextPage) {
+  const nextPath = PAGE_PATHS[nextPage] || "/";
+  if (window.location.pathname !== nextPath) {
+    window.history.pushState({ page: nextPage }, "", nextPath);
+  }
+}
+
 export function AppProvider({ children }) {
-  const [lang, setLang] = useState("en");
-  const [page, setPage] = useState("home");
+  const [lang, setLang] = useState("ar");
   const [auth, setAuth] = useState(false);
+  const [page, setPage] = useState(() => pageFromPath(window.location.pathname, false));
   const [cart, setCart] = useState([]);
+  const [cartNotification, setCartNotification] = useState(null);
   const [products, setProducts] = useState(INIT_PRODUCTS);
   const [productsLoading, setProductsLoading] = useState(true); // NEW
   const [categories, setCategories] = useState(INIT_CATS);
@@ -21,10 +60,21 @@ export function AppProvider({ children }) {
   const tr = T[lang];
   const isRTL = lang === "ar";
 
-  // NEW: Load products from Supabase on mount
   useEffect(() => {
-    loadProducts();
-  }, []);
+    const handlePopState = () => {
+      setPage(pageFromPath(window.location.pathname, auth));
+      window.scrollTo(0, 0);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [auth]);
+
+  useEffect(() => {
+    if (auth && window.location.pathname === "/dashboard" && page === "dashboard-login") {
+      setPage("dashboard");
+    }
+  }, [auth, page]);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -57,15 +107,23 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  // NEW: Load products from Supabase on mount
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
   const navigate = useCallback(
     (p, extra = {}) => {
       if (p === "dashboard" && !auth) {
+        updateBrowserPath("dashboard-login");
         setPage("dashboard-login");
+        window.scrollTo(0, 0);
         return;
       }
       if (extra.product) setSelectedProduct(extra.product);
       if (extra.category) setShopCategory(extra.category);
       setPage(p);
+      updateBrowserPath(p);
       window.scrollTo(0, 0);
     },
     [auth]
@@ -86,6 +144,15 @@ export function AppProvider({ children }) {
       }
       return [...prev, { ...product, qty }];
     });
+    setCartNotification({
+      id: Date.now(),
+      productName: product.name,
+      qty,
+    });
+  }, []);
+
+  const dismissCartNotification = useCallback(() => {
+    setCartNotification(null);
   }, []);
 
   const removeFromCart = useCallback((id) => {
@@ -112,6 +179,8 @@ export function AppProvider({ children }) {
       cart,
       addToCart,
       removeFromCart,
+      cartNotification,
+      dismissCartNotification,
       cartTotal,
       cartCount,
       products,
@@ -127,12 +196,14 @@ export function AppProvider({ children }) {
       tr,
       isMobile,
       isRTL,
+      loadOrders: () => Promise.resolve([]), // Placeholder for orders loading
     }),
     [
       lang,
       page,
       auth,
       cart,
+      cartNotification,
       cartTotal,
       cartCount,
       products,
@@ -143,8 +214,10 @@ export function AppProvider({ children }) {
       tr,
       isMobile,
       isRTL,
+      loadProducts,
       navigate,
       addToCart,
+      dismissCartNotification,
       removeFromCart,
     ]
   );

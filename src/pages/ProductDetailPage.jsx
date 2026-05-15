@@ -3,6 +3,7 @@ import { useApp } from "../contexts/AppContext";
 import { C, FS, FB } from "../constants/theme";
 import Section from "../components/ui/Section";
 import { supabase } from "../lib/supabase";
+import { formatCurrency } from "../constants/options";
 
 /* ============================================================
    Horizontal Picker
@@ -701,13 +702,12 @@ function ProductDetailPage() {
                   fontWeight: 600,
                 }}
               >
-                $
-                {Math.round(
+                {formatCurrency(Math.round(
                   (product.price / product.count) *
                     flowerCount *
                     qty *
                     100
-                ) / 100}
+                ) / 100)}
               </span>
             </div>
 

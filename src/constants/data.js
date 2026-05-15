@@ -1,11 +1,11 @@
 export const INIT_CATS = [
-  { id: "all", icon: "💐", grad: "linear-gradient(135deg,#3a2a1a,#1c1510)" },
-  { id: "romantic", icon: "🌹", grad: "linear-gradient(135deg,#5c1a2a,#2a0a10)" },
-  { id: "graduation", icon: "🎓", grad: "linear-gradient(135deg,#3a2e0a,#1a1408)" },
-  { id: "getWell", icon: "🌸", grad: "linear-gradient(135deg,#2a1a2e,#120a18)" },
-  { id: "birthday", icon: "🎂", grad: "linear-gradient(135deg,#1a1a3a,#0a0a1c)" },
-  { id: "wedding", icon: "💍", grad: "linear-gradient(135deg,#1a1a1a,#0d0d0d)" },
-  { id: "sympathy", icon: "🕊️", grad: "linear-gradient(135deg,#0a1a1a,#050e0e)" },
+  { id: "all", image: "/romantic.png", icon: "💐", grad: "linear-gradient(135deg,#3a2a1a,#1c1510)" },
+  { id: "romantic", image: "/romantic.png", icon: "🌹", grad: "linear-gradient(135deg,#5c1a2a,#2a0a10)" },
+  { id: "graduation", image: "/graduation.png", icon: "🎓", grad: "linear-gradient(135deg,#3a2e0a,#1a1408)" },
+  { id: "getWell", image: "/getWell.png", icon: "🌸", grad: "linear-gradient(135deg,#2a1a2e,#120a18)" },
+  { id: "birthday", image: "/birthday.png", icon: "🎂", grad: "linear-gradient(135deg,#1a1a3a,#0a0a1c)" },
+  { id: "wedding", image: "/wedding.png", icon: "💍", grad: "linear-gradient(135deg,#1a1a1a,#0d0d0d)" },
+  { id: "sympathy", image: "/sympathy.png", icon: "🕊️", grad: "linear-gradient(135deg,#0a1a1a,#050e0e)" },
 ];
 
 export const INIT_PRODUCTS = [

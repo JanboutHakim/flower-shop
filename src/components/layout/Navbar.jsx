@@ -3,7 +3,7 @@ import { useApp } from "../../contexts/AppContext";
 import { C, FB } from "../../constants/theme";
 
 function Navbar() {
-  const { tr, lang, setLang, navigate, cartCount, page, auth, isMobile } = useApp();
+  const { tr, lang, setLang, navigate, cartCount, page, isMobile } = useApp();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const links = [
@@ -14,7 +14,6 @@ function Navbar() {
     { key: "card-builder", label: tr.cardBuilder },
     { key: "cart", label: tr.cart },
   ];
-  if (auth) links.push({ key: "dashboard", label: tr.dashboard });
 
   const handleNav = useCallback((key) => {
     navigate(key);
@@ -118,16 +117,6 @@ function Navbar() {
             >
               {lang === "en" ? "عربي" : "EN"}
             </button>
-            {!auth && !isMobile && (
-              <button
-                onClick={() => navigate("dashboard-login")}
-                className="btn-s"
-                style={{ padding: "6px 16px", fontSize: ".75rem" }}
-              >
-                {tr.dashboard}
-              </button>
-            )}
-
             {/* Mobile Hamburger */}
             {isMobile && (
               <button
@@ -242,23 +231,6 @@ function Navbar() {
               )}
             </button>
           ))}
-          {!auth && (
-            <button
-              onClick={() => handleNav("dashboard-login")}
-              className="btn-s"
-              style={{ 
-                padding: "8px 20px", 
-                fontSize: ".85rem", 
-                marginTop: 8, 
-                width: "100%", 
-                maxWidth: "280px",
-                animation: `menuSlideIn .4s ease both`,
-                animationDelay: `${links.length * 0.08}s`,
-              }}
-            >
-              {tr.dashboard}
-            </button>
-          )}
         </div>
       )}
     </nav>

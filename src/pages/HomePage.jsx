@@ -6,7 +6,7 @@ import Tag from "../components/ui/Tag";
 import ProductCard from "../components/product/ProductCard";
 
 function HomePage() {
-  const { tr, navigate, products, addToCart, setSelectedProduct, setShopCategory, lang, categories, isMobile } = useApp();
+  const { tr, navigate, products, setShopCategory, lang, categories } = useApp();
   const isRTL = lang === "ar";
   const featured = products.slice(0, 4);
 
@@ -40,6 +40,7 @@ function HomePage() {
         >
           🌹
         </div>
+
         <div
           style={{
             position: "absolute",
@@ -57,6 +58,7 @@ function HomePage() {
         <Section>
           <div style={{ maxWidth: 600 }} className="fadeUp">
             <Tag>{tr.heroTag}</Tag>
+
             <h1
               style={{
                 fontFamily: FS,
@@ -70,6 +72,7 @@ function HomePage() {
             >
               {tr.heroTitle}
             </h1>
+
             <p
               style={{
                 color: C.creamD,
@@ -81,6 +84,7 @@ function HomePage() {
             >
               {tr.heroSub}
             </p>
+
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
               <button
                 className="btn-p"
@@ -89,6 +93,7 @@ function HomePage() {
               >
                 {tr.shopNow}
               </button>
+
               <button
                 className="btn-s"
                 onClick={() => navigate("ai-builder")}
@@ -96,6 +101,7 @@ function HomePage() {
               >
                 {tr.buildOwn}
               </button>
+
               <button
                 className="btn-s"
                 onClick={() => navigate("card-builder")}
@@ -120,16 +126,25 @@ function HomePage() {
       </div>
 
       {/* Categories */}
-      <div style={{ padding: "80px 0", background: C.bg }}>
+      <div
+        style={{
+          padding: "90px 0",
+          background: `linear-gradient(180deg, ${C.bg} 0%, #1b1013 45%, ${C.bg} 100%)`,
+        }}
+      >
         <Section>
           <div className="fadeUp" style={{ textAlign: "center", marginBottom: 48 }}>
             <Tag>{tr.collections}</Tag>
           </div>
+
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
-              gap: 16,
+              display: "flex",
+              gap: 22,
+              overflowX: "auto",
+              paddingBottom: 10,
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
             }}
           >
             {categories
@@ -143,63 +158,70 @@ function HomePage() {
                   }}
                   className={`card-hover fadeUp d${(i % 4) + 1}`}
                   style={{
-                    background: cat.image ? undefined : cat.grad,
-                    border: `1px solid ${C.border}`,
-                    borderRadius: 2,
-                    padding: 0,
+                    border: `1px solid rgba(255,255,255,.12)`,
+                    borderRadius: 18,
+                    padding: 10,
                     cursor: "pointer",
                     textAlign: "center",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 10,
-                    transition: "border-color .3s",
                     overflow: "hidden",
                     position: "relative",
-                    height: 200,
+                    height: 250,
+                    minWidth: 220,
+                    flex: "0 0 220px",
+                    background:
+                      cat.grad ||
+                      "linear-gradient(135deg, rgba(92,26,42,.55), rgba(201,149,108,.18))",
+                    boxShadow: "0 18px 45px rgba(0,0,0,.35)",
                   }}
                 >
-                  {cat.image ? (
-                    <>
-                      <img 
-                        src={cat.image} 
-                        alt={cat.name?.en || cat.id}
-                        style={{ 
-                          position: "absolute",
-                          top: 0, left: 0, right: 0, bottom: 0,
-                          width: "100%", 
-                          height: "100%", 
-                          objectFit: "cover",
-                          opacity: 0.7,
-                        }}
-                      />
-                      <div style={{
-                        position: "absolute",
-                        top: 0, left: 0, right: 0, bottom: 0,
-                        background: "linear-gradient(to top, rgba(0,0,0,.7) 0%, transparent 60%)",
-                      }} />
-                    </>
-                  ) : null}
-                  <span style={{ 
-                    fontSize: "2.4rem", 
-                    zIndex: 1,
-                    position: "relative",
-                    marginTop: cat.image ? "auto" : 32,
-                  }}>{cat.icon}</span>
-                  <span
+                  <div
                     style={{
-                      fontFamily: FS,
-                      fontSize: "1.05rem",
-                      color: C.cream,
-                      fontWeight: 400,
-                      letterSpacing: ".03em",
-                      zIndex: 1,
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: 14,
+                      overflow: "hidden",
                       position: "relative",
-                      marginBottom: cat.image ? 20 : 32,
+                      background: "#2a171b",
                     }}
                   >
-                    {tr[cat.id]}
-                  </span>
+                    {cat.image ? (
+                      <img
+                        src={cat.image}
+                        alt={cat.name?.en || cat.id}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                      />
+                    ) : null}
+
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        padding: "55px 16px 18px",
+                        background:
+                          "linear-gradient(to top, rgba(20,8,10,.9), rgba(20,8,10,.45), transparent)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: FS,
+                          fontSize: "1.25rem",
+                          color: C.cream,
+                          fontWeight: 400,
+                          letterSpacing: ".04em",
+                          textShadow: "0 2px 12px rgba(0,0,0,.65)",
+                        }}
+                      >
+                        {tr[cat.id]}
+                      </span>
+                    </div>
+                  </div>
                 </button>
               ))}
           </div>
@@ -225,6 +247,7 @@ function HomePage() {
             <div className="fadeUp">
               <Tag>{tr.featuredTitle}</Tag>
             </div>
+
             <button
               className="btn-s"
               onClick={() => {
@@ -236,6 +259,7 @@ function HomePage() {
               {tr.viewAll}
             </button>
           </div>
+
           <div
             style={{
               display: "grid",
@@ -278,6 +302,7 @@ function HomePage() {
             >
               "Every petal tells a story."
             </h2>
+
             <p style={{ color: C.creamD, fontSize: ".9rem", letterSpacing: ".1em" }}>
               — Bloom & Grace, Est. 2020
             </p>

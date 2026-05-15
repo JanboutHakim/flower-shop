@@ -16,10 +16,6 @@ export function useProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
   const loadProducts = useCallback(async () => {
     try {
       setLoading(true);
@@ -34,6 +30,10 @@ export function useProducts() {
     }
   }, []);
 
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
   return { products, loading, error, refetch: loadProducts };
 }
 
@@ -44,11 +44,6 @@ export function useProductsByCategory(category) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (!category) return;
-    loadProducts();
-  }, [category]);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -63,6 +58,11 @@ export function useProductsByCategory(category) {
       setLoading(false);
     }
   }, [category]);
+
+  useEffect(() => {
+    if (!category) return;
+    loadProducts();
+  }, [category, loadProducts]);
 
   return { products, loading, error, refetch: loadProducts };
 }
@@ -118,15 +118,6 @@ export function useOrdersByPhone(phone) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!phone) {
-      setOrders([]);
-      setLoading(false);
-      return;
-    }
-    loadOrders();
-  }, [phone]);
-
   const loadOrders = useCallback(async () => {
     try {
       setLoading(true);
@@ -141,6 +132,15 @@ export function useOrdersByPhone(phone) {
     }
   }, [phone]);
 
+  useEffect(() => {
+    if (!phone) {
+      setOrders([]);
+      setLoading(false);
+      return;
+    }
+    loadOrders();
+  }, [phone, loadOrders]);
+
   return { orders, loading, error, refetch: loadOrders };
 }
 
@@ -151,10 +151,6 @@ export function useAllOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    loadOrders();
-  }, []);
 
   const loadOrders = useCallback(async () => {
     try {
@@ -169,6 +165,10 @@ export function useAllOrders() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   return { orders, loading, error, refetch: loadOrders };
 }

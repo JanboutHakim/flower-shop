@@ -1,6 +1,6 @@
 import React from "react";
 import { useApp } from "../../contexts/AppContext";
-import { C, FS, FB } from "../../constants/theme";
+import { C, FB } from "../../constants/theme";
 import Section from "../ui/Section";
 
 function Footer() {

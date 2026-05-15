@@ -94,6 +94,46 @@ export async function deleteProduct(id) {
   }
 }
 
+// ============= PRODUCT OPTIONS =============
+export async function createRibbon(ribbonData) {
+  const { data, error } = await supabase
+    .from('ribbons')
+    .insert([ribbonData])
+    .select();
+
+  if (error) {
+    console.error('Error creating ribbon:', error);
+    throw error;
+  }
+  return data[0];
+}
+
+export async function createWrap(wrapData) {
+  const { data, error } = await supabase
+    .from('wraps')
+    .insert([wrapData])
+    .select();
+
+  if (error) {
+    console.error('Error creating wrap:', error);
+    throw error;
+  }
+  return data[0];
+}
+
+export async function createCard(cardData) {
+  const { data, error } = await supabase
+    .from('cards')
+    .insert([cardData])
+    .select();
+
+  if (error) {
+    console.error('Error creating card:', error);
+    throw error;
+  }
+  return data[0];
+}
+
 // ============= THEMES =============
 export async function getThemes() {
   const { data, error } = await supabase

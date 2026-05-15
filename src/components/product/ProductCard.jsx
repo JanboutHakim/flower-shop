@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { useApp } from "../../contexts/AppContext";
 import { C, FS } from "../../constants/theme";
+import { formatCurrency } from "../../constants/options";
 
 function ProductCard({ product, delay = 0, categories }) {
   const { tr, lang, addToCart, navigate, setSelectedProduct } = useApp();
@@ -114,7 +115,10 @@ function ProductCard({ product, delay = 0, categories }) {
               fontWeight: 600,
             }}
           >
-            ${Math.round((product.price / product.count) * flowerCount * 100) / 100}
+            {formatCurrency(
+              Math.round((product.price / product.count) * flowerCount * 100) /
+                100
+            )}
           </span>
           {/* Input for selecting number of flowers */}
           <input
