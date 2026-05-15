@@ -16,7 +16,8 @@ Create `.env.local` in your project root:
 
 ```env
 REACT_APP_SUPABASE_URL=https://your-project.supabase.co
-REACT_APP_SUPABASE_ANON_KEY=your-anon-key-here
+REACT_APP_SUPABASE_PUBLISHABLE_KEY=your-publishable-or-anon-key-here
+REACT_APP_DASHBOARD_ADMIN_EMAILS=admin@example.com
 REACT_APP_CLOUDINARY_CLOUD_NAME=your-cloud-name
 REACT_APP_CLOUDINARY_UPLOAD_PRESET=flower_shop
 REACT_APP_WHATSAPP_NUMBER=963965578857
@@ -126,19 +127,11 @@ function CustomerOrdersPage({ phone }) {
 - Anyone can INSERT orders
 - No direct DELETE permissions for public
 
-For admin dashboard, add authentication:
-
-```javascript
-import { supabase } from '../lib/supabase';
-
-// Login
-await supabase.auth.signInWithPassword({
-  email: 'admin@shop.com',
-  password: 'password'
-});
-
-// Create policies for authenticated users only
-```
+For admin dashboard:
+- Create the admin user in Supabase Authentication.
+- Add that user id to the `admin_users` table from `DATABASE_SETUP.md`.
+- Keep `REACT_APP_DASHBOARD_ADMIN_EMAILS` set to the same admin email for an extra frontend allow-list.
+- Remove any old `orders_public_read` policy if you already ran the older setup SQL.
 
 ---
 

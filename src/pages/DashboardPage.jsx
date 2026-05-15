@@ -8,6 +8,7 @@ import {
   FaImage,
   FaPlus,
   FaSave,
+  FaSignOutAlt,
   FaSyncAlt,
   FaTrash,
 } from "react-icons/fa";
@@ -78,7 +79,7 @@ const blankOption = {
 
 function DashboardPage() {
   const { orders, loading, refetch } = useAllOrders();
-  const { refetchProducts } = useApp();
+  const { authUser, logoutDashboard, refetchProducts } = useApp();
   const [activeTab, setActiveTab] = useState("orders");
   const [filter, setFilter] = useState("all");
   const [searchPhone, setSearchPhone] = useState("");
@@ -163,7 +164,12 @@ function DashboardPage() {
       }}
     >
       <div style={{ maxWidth: 1240, margin: "0 auto" }}>
-        <DashboardHeader activeTab={activeTab} setActiveTab={setActiveTab} />
+        <DashboardHeader
+          activeTab={activeTab}
+          authUser={authUser}
+          logoutDashboard={logoutDashboard}
+          setActiveTab={setActiveTab}
+        />
 
         {activeTab === "orders" && selectedOrder ? (
           <OrderDetail
@@ -196,7 +202,7 @@ function DashboardPage() {
   );
 }
 
-function DashboardHeader({ activeTab, setActiveTab }) {
+function DashboardHeader({ activeTab, authUser, logoutDashboard, setActiveTab }) {
   return (
     <div
       style={{
@@ -217,19 +223,33 @@ function DashboardHeader({ activeTab, setActiveTab }) {
         </p>
       </div>
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <TabButton
-          active={activeTab === "orders"}
-          icon={<FaBoxOpen />}
-          label="Orders"
-          onClick={() => setActiveTab("orders")}
-        />
-        <TabButton
-          active={activeTab === "catalog"}
-          icon={<FaPlus />}
-          label="Catalog"
-          onClick={() => setActiveTab("catalog")}
-        />
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        {authUser?.email && (
+          <span style={{ color: C.secondary, fontSize: 13 }}>
+            {authUser.email}
+          </span>
+        )}
+        <div style={{ display: "flex", gap: 8 }}>
+          <TabButton
+            active={activeTab === "orders"}
+            icon={<FaBoxOpen />}
+            label="Orders"
+            onClick={() => setActiveTab("orders")}
+          />
+          <TabButton
+            active={activeTab === "catalog"}
+            icon={<FaPlus />}
+            label="Catalog"
+            onClick={() => setActiveTab("catalog")}
+          />
+          <button
+            type="button"
+            onClick={logoutDashboard}
+            style={secondaryButtonStyle()}
+          >
+            <FaSignOutAlt /> Logout
+          </button>
+        </div>
       </div>
     </div>
   );

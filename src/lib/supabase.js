@@ -1,7 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
-const SUPABASE_KEY = process.env.REACT_APP_SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_KEY =
+  process.env.REACT_APP_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.REACT_APP_SUPABASE_ANON_KEY;
+const DASHBOARD_ADMIN_EMAILS = (process.env.REACT_APP_DASHBOARD_ADMIN_EMAILS || '')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   throw new Error(
@@ -9,10 +15,64 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
   );
 }
 
-export const supabase = createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    persistSession: true,
+  },
+});
+
+// ============= AUTH =============
+export function isDashboardUserAllowed(user) {
+  if (!user) return false;
+  if (DASHBOARD_ADMIN_EMAILS.length === 0) return true;
+  return DASHBOARD_ADMIN_EMAILS.includes(String(user.email || '').toLowerCase());
+}
+
+export async function getCurrentSession() {
+  const { data, error } = await supabase.auth.getSession();
+
+  if (error) {
+    console.error('Error loading auth session:', error);
+    return null;
+  }
+
+  return data.session;
+}
+
+export function onAuthStateChange(callback) {
+  return supabase.auth.onAuthStateChange((_event, session) => {
+    callback(session);
+  });
+}
+
+export async function signInToDashboard(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.trim(),
+    password,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  if (!isDashboardUserAllowed(data.user)) {
+    await supabase.auth.signOut();
+    throw new Error('This account is not allowed to access the dashboard.');
+  }
+
+  return data;
+}
+
+export async function signOutDashboard() {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    throw error;
+  }
+}
+
 // ============= PRODUCTS =============
 export async function getProducts() {
   const { data, error } = await supabase

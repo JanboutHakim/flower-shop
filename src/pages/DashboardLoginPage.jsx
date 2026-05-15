@@ -3,25 +3,26 @@ import { useApp } from "../contexts/AppContext";
 import { C, FS } from "../constants/theme";
 
 function DashboardLoginPage() {
-  const { tr, navigate, setAuth } = useApp();
-  const [user, setUser] = useState("");
+  const { tr, loginDashboard } = useApp();
+  const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
-  const [err, setErr] = useState(false);
+  const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = useCallback(() => {
+  const handleLogin = useCallback(async (event) => {
+    event?.preventDefault?.();
+    if (loading) return;
+
     setLoading(true);
-    setErr(false);
-    setTimeout(() => {
-      if (user === "admin" && pass === "flowers2024") {
-        setAuth(true);
-        navigate("dashboard");
-      } else {
-        setErr(true);
-        setLoading(false);
-      }
-    }, 600);
-  }, [user, pass, setAuth, navigate]);
+    setErr("");
+
+    try {
+      await loginDashboard(email, pass);
+    } catch (error) {
+      setErr(error.message || tr.wrongCreds);
+      setLoading(false);
+    }
+  }, [email, loading, loginDashboard, pass, tr.wrongCreds]);
 
   return (
     <div
@@ -34,7 +35,8 @@ function DashboardLoginPage() {
         backgroundImage: `radial-gradient(ellipse at center, rgba(201,149,108,.06) 0%, transparent 70%)`,
       }}
     >
-      <div
+      <form
+        onSubmit={handleLogin}
         className="fadeUp"
         style={{
           background: C.bgCard,
@@ -83,18 +85,19 @@ function DashboardLoginPage() {
               borderRadius: 1,
             }}
           >
-            {tr.wrongCreds}
+            {err}
           </div>
         )}
 
         <div style={{ marginBottom: 16, textAlign: "left" }}>
-          <label>{tr.username}</label>
+          <label>Email</label>
           <input
             className="inp"
-            type="text"
-            value={user}
-            onChange={(e) => setUser(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="username"
+            required
           />
         </div>
         <div style={{ marginBottom: 28, textAlign: "left" }}>
@@ -104,22 +107,29 @@ function DashboardLoginPage() {
             type="password"
             value={pass}
             onChange={(e) => setPass(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            autoComplete="current-password"
+            required
           />
         </div>
         <button
+          type="submit"
           className="btn-p"
-          onClick={handleLogin}
-          style={{ width: "100%", padding: "13px", opacity: loading ? 0.7 : 1 }}
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: "13px",
+            opacity: loading ? 0.7 : 1,
+            cursor: loading ? "wait" : "pointer",
+          }}
         >
           {loading ? "..." : tr.loginBtn}
         </button>
         <p
           style={{ color: C.creamD, fontSize: ".75rem", marginTop: 20, opacity: 0.6 }}
         >
-          admin / flowers2024
+          Use the admin email and password from Supabase Auth.
         </p>
-      </div>
+      </form>
     </div>
   );
 }

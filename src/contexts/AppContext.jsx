@@ -1,10 +1,18 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect } from "react";
 import { T } from "../i18n/translations";
 import { INIT_CATS, INIT_PRODUCTS } from "../constants/data";
-import { getProducts } from "../lib/supabase"; // NEW: Import from Supabase
+import {
+  getCurrentSession,
+  getProducts,
+  isDashboardUserAllowed,
+  onAuthStateChange,
+  signInToDashboard,
+  signOutDashboard,
+} from "../lib/supabase"; // NEW: Import from Supabase
 import { useMobile } from "../hooks/useMobile";
 
 const AppContext = createContext(null);
+const CART_STORAGE_KEY = "flower_shop_cart";
 
 const PAGE_PATHS = {
   home: "/",
@@ -44,11 +52,26 @@ function updateBrowserPath(nextPage) {
   }
 }
 
+function loadStoredCart() {
+  try {
+    const storedCart = window.localStorage.getItem(CART_STORAGE_KEY);
+    if (!storedCart) return [];
+
+    const parsedCart = JSON.parse(storedCart);
+    return Array.isArray(parsedCart) ? parsedCart : [];
+  } catch (error) {
+    console.error("Error loading saved cart:", error);
+    return [];
+  }
+}
+
 export function AppProvider({ children }) {
   const [lang, setLang] = useState("ar");
   const [auth, setAuth] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authUser, setAuthUser] = useState(null);
   const [page, setPage] = useState(() => pageFromPath(window.location.pathname, false));
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(loadStoredCart);
   const [cartNotification, setCartNotification] = useState(null);
   const [products, setProducts] = useState(INIT_PRODUCTS);
   const [productsLoading, setProductsLoading] = useState(true); // NEW
@@ -59,6 +82,54 @@ export function AppProvider({ children }) {
   const isMobile = useMobile();
   const tr = T[lang];
   const isRTL = lang === "ar";
+
+  const applySession = useCallback((session) => {
+    const user = session?.user || null;
+    const allowed = isDashboardUserAllowed(user);
+
+    setAuth(Boolean(user && allowed));
+    setAuthUser(user && allowed ? user : null);
+    setPage((currentPage) => {
+      if (!user || !allowed) {
+        return currentPage === "dashboard"
+          ? "dashboard-login"
+          : pageFromPath(window.location.pathname, false);
+      }
+
+      return pageFromPath(window.location.pathname, true);
+    });
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    getCurrentSession()
+      .then((session) => {
+        if (!mounted) return;
+        applySession(session);
+      })
+      .catch((error) => {
+        console.error("Error checking dashboard session:", error);
+        if (mounted) {
+          setAuth(false);
+          setAuthUser(null);
+        }
+      })
+      .finally(() => {
+        if (mounted) setAuthLoading(false);
+      });
+
+    const { data } = onAuthStateChange((session) => {
+      if (!mounted) return;
+      applySession(session);
+      setAuthLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+      data?.subscription?.unsubscribe?.();
+    };
+  }, [applySession]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -75,6 +146,33 @@ export function AppProvider({ children }) {
       setPage("dashboard");
     }
   }, [auth, page]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    } catch (error) {
+      console.error("Error saving cart:", error);
+    }
+  }, [cart]);
+
+  const loginDashboard = useCallback(async (email, password) => {
+    const data = await signInToDashboard(email, password);
+    setAuth(true);
+    setAuthUser(data.user);
+    setPage("dashboard");
+    updateBrowserPath("dashboard");
+    window.scrollTo(0, 0);
+    return data;
+  }, []);
+
+  const logoutDashboard = useCallback(async () => {
+    await signOutDashboard();
+    setAuth(false);
+    setAuthUser(null);
+    setPage("dashboard-login");
+    updateBrowserPath("dashboard-login");
+    window.scrollTo(0, 0);
+  }, []);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -175,7 +273,10 @@ export function AppProvider({ children }) {
       page,
       navigate,
       auth,
-      setAuth,
+      authLoading,
+      authUser,
+      loginDashboard,
+      logoutDashboard,
       cart,
       addToCart,
       removeFromCart,
@@ -202,6 +303,8 @@ export function AppProvider({ children }) {
       lang,
       page,
       auth,
+      authLoading,
+      authUser,
       cart,
       cartNotification,
       cartTotal,
@@ -215,6 +318,8 @@ export function AppProvider({ children }) {
       isMobile,
       isRTL,
       loadProducts,
+      loginDashboard,
+      logoutDashboard,
       navigate,
       addToCart,
       dismissCartNotification,

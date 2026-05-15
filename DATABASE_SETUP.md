@@ -76,27 +76,77 @@ CREATE TABLE customizations (
   subtotal DECIMAL(10, 2)
 );
 
+-- ADMIN USERS TABLE
+-- Create the admin login user in Supabase Auth first, then insert that user's id here.
+CREATE TABLE admin_users (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT UNIQUE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Enable RLS (Row Level Security)
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE themes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customizations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+
+-- Helper condition used by dashboard-only policies
+-- Replace the user_id row in admin_users when changing dashboard admins.
 
 -- Policies: Allow public read on products and themes
 CREATE POLICY "products_public_read" ON products FOR SELECT USING (true);
 CREATE POLICY "themes_public_read" ON themes FOR SELECT USING (true);
 
--- Policies: Allow insert on orders (public can create)
+-- Policies: Customers can create orders, but only admins can read/update them.
 CREATE POLICY "orders_public_insert" ON orders FOR INSERT WITH CHECK (true);
-CREATE POLICY "orders_public_read" ON orders FOR SELECT USING (true);
+CREATE POLICY "orders_admin_read" ON orders
+  FOR SELECT TO authenticated
+  USING (EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid()));
+CREATE POLICY "orders_admin_update" ON orders
+  FOR UPDATE TO authenticated
+  USING (EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid()))
+  WITH CHECK (EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid()));
 
 CREATE POLICY "customizations_public_insert" ON customizations FOR INSERT WITH CHECK (true);
-CREATE POLICY "customizations_public_read" ON customizations FOR SELECT USING (true);
+CREATE POLICY "customizations_admin_read" ON customizations
+  FOR SELECT TO authenticated
+  USING (EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid()));
+
+-- Policies: only admins can manage catalog data from the dashboard.
+CREATE POLICY "products_admin_insert" ON products
+  FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid()));
+CREATE POLICY "products_admin_update" ON products
+  FOR UPDATE TO authenticated
+  USING (EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid()))
+  WITH CHECK (EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid()));
+CREATE POLICY "products_admin_delete" ON products
+  FOR DELETE TO authenticated
+  USING (EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid()));
+
+CREATE POLICY "admin_users_read_self" ON admin_users
+  FOR SELECT TO authenticated
+  USING (user_id = auth.uid());
 
 -- INDEXES for performance
 CREATE INDEX idx_orders_created_at ON orders(created_at);
 CREATE INDEX idx_orders_phone ON orders(customer_phone);
 CREATE INDEX idx_products_category ON products(category);
+```
+
+After creating an admin user in Supabase Authentication, add that user to `admin_users`:
+
+```sql
+INSERT INTO admin_users (user_id, email)
+VALUES ('paste-auth-user-id-here', 'admin@example.com');
+```
+
+If you already ran an older setup that allowed public order reads, remove those policies:
+
+```sql
+DROP POLICY IF EXISTS "orders_public_read" ON orders;
+DROP POLICY IF EXISTS "customizations_public_read" ON customizations;
 ```
 
 ---

@@ -1,5 +1,6 @@
 import { AppProvider, useApp } from "./contexts/AppContext";
 import { C, GS } from "./constants/theme";
+import { createPortal } from "react-dom";
 
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
@@ -19,8 +20,10 @@ import { FaShoppingCart, FaTimes, FaWhatsapp } from "react-icons/fa";
 
 function Router() {
   const {
+    authLoading,
     cartNotification,
     dismissCartNotification,
+    isMobile,
     isRTL,
     lang,
     navigate,
@@ -50,9 +53,9 @@ function Router() {
       case "checkout":
         return <CheckoutPage />;
       case "dashboard-login":
-        return <DashboardLoginPage />;
+        return authLoading ? <DashboardLoading /> : <DashboardLoginPage />;
       case "dashboard":
-        return <DashboardPage />;
+        return authLoading ? <DashboardLoading /> : <DashboardPage />;
       default:
         return <HomePage />;
     }
@@ -82,36 +85,71 @@ function Router() {
           lang={lang}
           isRTL={isRTL}
           onClose={dismissCartNotification}
-          onCart={() => navigate("cart")}
+          onCart={() => {
+            dismissCartNotification();
+            navigate("cart");
+          }}
         />
       )}
       {!hideAdminChrome && (
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Order flowers on WhatsApp"
-          style={{
-            position: "fixed",
-            right: 20,
-            bottom: 20,
-            width: 58,
-            height: 58,
-            borderRadius: "50%",
-            background: "#25D366",
-            color: "white",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 14px 34px rgba(0,0,0,.35)",
-            fontSize: 30,
-            zIndex: 50,
-            textDecoration: "none",
-          }}
-        >
-          <FaWhatsapp aria-hidden="true" />
-        </a>
+        <FloatingWhatsAppButton href={whatsappUrl} isMobile={isMobile} />
       )}
+    </div>
+  );
+}
+
+function FloatingWhatsAppButton({ href, isMobile }) {
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Order flowers on WhatsApp"
+      style={{
+        position: "fixed",
+        right: isMobile ? 16 : 20,
+        bottom: isMobile ? 18 : 20,
+        left: "auto",
+        top: "auto",
+        width: isMobile ? 56 : 58,
+        height: isMobile ? 56 : 58,
+        borderRadius: "50%",
+        background: "#25D366",
+        color: "white",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: "0 14px 34px rgba(0,0,0,.35)",
+        fontSize: isMobile ? 28 : 30,
+        lineHeight: 1,
+        zIndex: 2147483647,
+        textDecoration: "none",
+        pointerEvents: "auto",
+        transform: "translateZ(0)",
+      }}
+    >
+      <FaWhatsapp aria-hidden="true" />
+    </a>,
+    document.body
+  );
+}
+
+function DashboardLoading() {
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: C.bg,
+        color: C.creamD,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontWeight: 800,
+      }}
+    >
+      Checking dashboard session...
     </div>
   );
 }
