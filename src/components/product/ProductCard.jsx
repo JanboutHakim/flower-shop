@@ -6,17 +6,15 @@ import { formatCurrency } from "../../constants/options";
 function ProductCard({ product, delay = 0, categories }) {
   const { tr, lang, addToCart, navigate, setSelectedProduct } = useApp();
   const [added, setAdded] = useState(false);
-  // State to hold the number of flowers (quantity) selected by the user
-  const [flowerCount, setFlowerCount] = useState(1);
 
   const handleAdd = useCallback(
     (e) => {
       e.stopPropagation();
-      addToCart({ ...product, flowerCount }, 1);
+      addToCart(product, 1);
       setAdded(true);
       setTimeout(() => setAdded(false), 1800);
     },
-    [addToCart, product, flowerCount]
+    [addToCart, product]
   );
 
   const handleView = useCallback(() => {
@@ -115,28 +113,8 @@ function ProductCard({ product, delay = 0, categories }) {
               fontWeight: 600,
             }}
           >
-            {formatCurrency(
-              Math.round((product.price / product.count) * flowerCount * 100) /
-                100
-            )}
+            {formatCurrency(product.price)}
           </span>
-          {/* Input for selecting number of flowers */}
-          <input
-            type="number"
-            min="1"
-            value={flowerCount}
-            onChange={(e) => {
-              const val = parseInt(e.target.value, 10);
-              setFlowerCount(val > 0 ? val : 1);
-            }}
-            style={{
-              width: "60px",
-              padding: "4px",
-              fontSize: "1rem",
-              borderRadius: "4px",
-              border: `1px solid ${C.border}`,
-            }}
-          />
           <button
             className="btn-p"
             onClick={handleAdd}
