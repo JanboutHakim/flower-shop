@@ -1,10 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
+import { DASHBOARD_ADMIN_EMAILS, SUPABASE_KEY, SUPABASE_URL } from './env';
 
-const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
-const SUPABASE_KEY =
-  process.env.REACT_APP_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.REACT_APP_SUPABASE_ANON_KEY;
-const DASHBOARD_ADMIN_EMAILS = (process.env.REACT_APP_DASHBOARD_ADMIN_EMAILS || '')
+const DASHBOARD_ADMIN_EMAIL_LIST = DASHBOARD_ADMIN_EMAILS
   .split(',')
   .map((email) => email.trim().toLowerCase())
   .filter(Boolean);
@@ -26,8 +23,8 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 // ============= AUTH =============
 export function isDashboardUserAllowed(user) {
   if (!user) return false;
-  if (DASHBOARD_ADMIN_EMAILS.length === 0) return true;
-  return DASHBOARD_ADMIN_EMAILS.includes(String(user.email || '').toLowerCase());
+  if (DASHBOARD_ADMIN_EMAIL_LIST.length === 0) return true;
+  return DASHBOARD_ADMIN_EMAIL_LIST.includes(String(user.email || '').toLowerCase());
 }
 
 export async function getCurrentSession() {

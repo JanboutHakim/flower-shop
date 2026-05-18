@@ -2,10 +2,24 @@ import React, { useState, useCallback } from "react";
 import { useApp } from "../../contexts/AppContext";
 import { C, FS } from "../../constants/theme";
 import { formatCurrency } from "../../constants/options";
+import {
+  getProductDescription,
+  getProductImage,
+  getProductMeta,
+  getProductName,
+  optionLabel,
+} from "../../lib/product";
 
 function ProductCard({ product, delay = 0, categories }) {
   const { tr, lang, addToCart, navigate, setSelectedProduct } = useApp();
   const [added, setAdded] = useState(false);
+
+  const meta = getProductMeta(product);
+  const productName = getProductName(product, lang);
+  const description = getProductDescription(product, lang);
+  const productImage = getProductImage(product);
+  const primaryOccasion = meta.occasion[0];
+  const primaryColor = meta.colors[0];
 
   const handleAdd = useCallback(
     (e) => {
@@ -19,7 +33,7 @@ function ProductCard({ product, delay = 0, categories }) {
 
   const handleView = useCallback(() => {
     setSelectedProduct(product);
-    navigate("product");
+    navigate("product", { product });
   }, [product, setSelectedProduct, navigate]);
 
   return (
@@ -46,15 +60,19 @@ function ProductCard({ product, delay = 0, categories }) {
           position: "relative",
         }}
       >
-        <img
-          src={product.image_url}
-          alt={product.name[lang]}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        />
+        {productImage ? (
+          <img
+            src={productImage}
+            alt={productName}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+        ) : (
+          <span>{product.icon}</span>
+        )}
         <span
           style={{
             position: "absolute",
@@ -71,7 +89,7 @@ function ProductCard({ product, delay = 0, categories }) {
           }}
         >
           {categories.find((c) => c.id === product.category)?.icon}{" "}
-          {tr[product.category]}
+          {tr[product.category] || product.category}
         </span>
       </div>
       <div style={{ padding: 20 }}>
@@ -84,19 +102,37 @@ function ProductCard({ product, delay = 0, categories }) {
             lineHeight: 1.3,
           }}
         >
-          {product.name[lang]}
+          {productName}
         </h3>
         <p
           style={{
             color: C.creamD,
             fontSize: ".82rem",
             lineHeight: 1.6,
-            marginBottom: 16,
+            marginBottom: 14,
             minHeight: 40,
           }}
         >
-          {product.description[lang].substring(0, 70)}…
+          {description ? `${description.substring(0, 74)}...` : ""}
         </p>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+          {primaryOccasion && (
+            <Badge
+              label={`${lang === "ar" ? "مناسبة لـ" : "Best for"}: ${optionLabel(
+                primaryOccasion,
+                lang
+              )}`}
+            />
+          )}
+          {primaryColor && (
+            <Badge
+              label={`${lang === "ar" ? "اللون" : "Color"}: ${optionLabel(primaryColor, lang)}`}
+            />
+          )}
+          <Badge label={`${tr.availability || "Availability"}: ${optionLabel("dailyFlowers", lang)}`} />
+        </div>
+
         <div
           style={{
             display: "flex",
@@ -121,9 +157,7 @@ function ProductCard({ product, delay = 0, categories }) {
             style={{
               padding: "8px 16px",
               fontSize: ".75rem",
-              background: added
-                ? "linear-gradient(135deg,#2a6a3a,#1a4a2a)"
-                : undefined,
+              background: added ? "linear-gradient(135deg,#2a6a3a,#1a4a2a)" : undefined,
             }}
           >
             {added ? tr.successAdd : tr.addToCart}
@@ -131,6 +165,24 @@ function ProductCard({ product, delay = 0, categories }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function Badge({ label }) {
+  return (
+    <span
+      style={{
+        border: `1px solid ${C.border}`,
+        background: "rgba(201,149,108,.07)",
+        color: C.creamD,
+        fontSize: ".68rem",
+        padding: "4px 7px",
+        borderRadius: 999,
+        lineHeight: 1.2,
+      }}
+    >
+      {label}
+    </span>
   );
 }
 

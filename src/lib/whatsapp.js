@@ -1,6 +1,6 @@
 import { formatCurrency } from "../constants/options";
-
-const WHATSAPP_NUMBER = process.env.REACT_APP_WHATSAPP_NUMBER;
+import { AVAILABILITY_NOTE, getProductName } from "./product";
+import { WHATSAPP_NUMBER } from "./env";
 
 /**
  * Send order details to WhatsApp.
@@ -23,8 +23,11 @@ export function buildOrderMessage(cartItems, total, formData) {
       )}`;
       if (item.ribbon) line += `\n  Ribbon: ${item.ribbon}`;
       if (item.wrap) line += `\n  Wrap: ${item.wrap}`;
+      if (item.flowerCount) line += `\n  Flowers/size: ${item.flowerCount}`;
+      if (item.customSummary) line += `\n  Custom bouquet: ${formatSummary(item.customSummary)}`;
       if (item.msg) line += `\n  Message: ${item.msg}`;
       if (item.cardText) line += `\n  Card: "${item.cardText}"`;
+      if (item.cardMessage) line += `\n  Card: "${item.cardMessage}"`;
       return line;
     })
     .join("\n\n");
@@ -53,16 +56,49 @@ Method: ${paymentMethod}
 ${paymentReceiptLine}
 
 *DELIVERY INFO*
-Name: ${formData.name}
-Phone: ${formData.phone}
-City: ${formData.city}
+Customer: ${formData.name || formData.customerName || "-"}
+Customer Phone: ${formData.phone || formData.customerPhone || "-"}
+Recipient: ${formData.recipientName || "-"}
+Recipient Phone: ${formData.recipientPhone || "-"}
+City/Area: ${formData.city || formData.area || "-"}
 Address: ${formData.address || "-"}
-Delivery Date: ${formData.date || "-"}
-Delivery Time: ${formData.time || "-"}
-Notes: ${formData.notes || "-"}`;
+Delivery Date: ${formData.date || formData.deliveryDate || "-"}
+Delivery Time: ${formData.time || formData.deliveryTime || "-"}
+Sender Name: ${formData.senderName || "-"}
+Gift Message: ${formData.giftMessage || "-"}
+Notes: ${formData.notes || "-"}
+
+${AVAILABILITY_NOTE.en}`;
 }
 
 export function createWhatsAppLink(message) {
   const encodedMessage = encodeURIComponent(message);
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+}
+
+export function buildProductWhatsAppMessage(product, options = {}) {
+  return `Hello! I would like to order this bouquet.
+
+Product: ${getProductName(product, "en")}
+Quantity: ${options.qty || 1}
+Price: ${formatCurrency(options.price || product?.price || 0)}
+Flowers/size: ${options.flowerCount || product?.count || "-"}
+Ribbon: ${options.ribbon || "-"}
+Wrapping: ${options.wrap || "-"}
+Gift/Card message: ${options.cardText || "-"}
+
+Please confirm the final bouquet details before preparation.`;
+}
+
+export function buildCartWhatsAppMessage(cartItems, total, formData = {}) {
+  return buildOrderMessage(cartItems, total, formData);
+}
+
+function formatSummary(summary) {
+  if (!summary) return "-";
+  if (typeof summary === "string") return summary;
+  return Object.entries(summary)
+    .filter(([, value]) => value)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(", ");
 }

@@ -1,5 +1,11 @@
-const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME?.trim();
-const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET?.trim();
+import {
+  CLOUDINARY_API_KEY,
+  CLOUDINARY_CLOUD_NAME as RAW_CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_UPLOAD_PRESET as RAW_CLOUDINARY_UPLOAD_PRESET,
+} from './env';
+
+const CLOUDINARY_CLOUD_NAME = RAW_CLOUDINARY_CLOUD_NAME?.trim();
+const CLOUDINARY_UPLOAD_PRESET = RAW_CLOUDINARY_UPLOAD_PRESET?.trim();
 
 if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
   console.error('Missing Cloudinary environment variables');
@@ -16,7 +22,7 @@ export async function uploadToCloudinary(file) {
   }
 
   if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-    throw new Error('Cloudinary is not configured. Check REACT_APP_CLOUDINARY_CLOUD_NAME and REACT_APP_CLOUDINARY_UPLOAD_PRESET.');
+    throw new Error('Cloudinary is not configured. Check VITE_CLOUDINARY_CLOUD_NAME/REACT_APP_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET/REACT_APP_CLOUDINARY_UPLOAD_PRESET.');
   }
 
   const formData = new FormData();
@@ -83,5 +89,5 @@ export function getCloudinaryUrl(publicId, options = {}) {
  * For frontend-only apps, consider using Cloudinary's signed delete URLs
  */
 export function getDeleteUrl(publicId, timestamp, signature) {
-  return `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/resources/image/upload/${publicId}?public_id=${publicId}&timestamp=${timestamp}&signature=${signature}&api_key=${process.env.REACT_APP_CLOUDINARY_API_KEY}`;
+  return `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/resources/image/upload/${publicId}?public_id=${publicId}&timestamp=${timestamp}&signature=${signature}&api_key=${CLOUDINARY_API_KEY}`;
 }

@@ -35,6 +35,36 @@ const TPLS = {
     sig: "Your Name",
     layout: "message",
   },
+  graduation: {
+    bg: "#faf7ee",
+    tc: "#152033",
+    ac: "#c99a3d",
+    font: "Playfair Display",
+    title: "Class of 2026",
+    msg: "Congratulations on your graduation. Your next chapter starts beautifully.",
+    sig: "So proud of you",
+    layout: "graduation",
+  },
+  wedding: {
+    bg: "#fff8f5",
+    tc: "#39251f",
+    ac: "#c89475",
+    font: "Cormorant Garamond",
+    title: "Forever Begins",
+    msg: "Wishing you a lifetime of joy, tenderness, and blooming love.",
+    sig: "With warm wishes",
+    layout: "wedding",
+  },
+  love: {
+    bg: "#fff5f7",
+    tc: "#3c2029",
+    ac: "#b23a5b",
+    font: "Dancing Script",
+    title: "For You",
+    msg: "A little reminder that you are loved today, tomorrow, and always.",
+    sig: "With all my love",
+    layout: "love",
+  },
   photo: {
     bg: "#f7f7f7",
     tc: "#222222",
@@ -72,6 +102,133 @@ const V = {
 
 const CANVAS_WIDTH = 600;
 const CANVAS_HEIGHT = 400;
+const TEMPLATE_ORDER = ["graduation", "wedding", "love", "photo", "simple", "blank"];
+const TEMPLATE_LABELS = {
+  en: {
+    graduation: ["Graduation", "Classy gold details"],
+    wedding: ["Wedding", "Soft rings and florals"],
+    love: ["Love", "Romantic blush card"],
+    simple: ["Simple", "Title and message"],
+    photo: ["Photo", "Image and note"],
+    dark: ["Dark", "Simple dark"],
+    blank: ["Blank", "Plain landscape"],
+  },
+  ar: {
+    graduation: ["\u062a\u062e\u0631\u062c", "\u062a\u0641\u0627\u0635\u064a\u0644 \u0630\u0647\u0628\u064a\u0629 \u0623\u0646\u064a\u0642\u0629"],
+    wedding: ["\u0632\u0641\u0627\u0641", "\u062e\u0648\u0627\u062a\u0645 \u0648\u0648\u0631\u0648\u062f \u0646\u0627\u0639\u0645\u0629"],
+    love: ["\u062d\u0628", "\u0628\u0637\u0627\u0642\u0629 \u0631\u0648\u0645\u0627\u0646\u0633\u064a\u0629"],
+    simple: ["بسيطة", "عنوان ورسالة"],
+    photo: ["صورة", "صورة وملاحظة"],
+    dark: ["داكنة", "تصميم داكن بسيط"],
+    blank: ["فارغة", "بطاقة أفقية فارغة"],
+  },
+};
+const TEMPLATE_THUMBS = {
+  graduation: {
+    bg: "linear-gradient(135deg,#faf7ee 0%,#faf7ee 55%,#152033 55%,#152033 100%)",
+    color: "#152033",
+    accent: "#c99a3d",
+    mark: "\u25c6",
+  },
+  wedding: {
+    bg: "radial-gradient(circle at 25% 32%,rgba(200,148,117,.24) 0 22%,transparent 23%),linear-gradient(135deg,#fff8f5,#f6dfd7)",
+    color: "#39251f",
+    accent: "#c89475",
+    mark: "\u25cb",
+  },
+  love: {
+    bg: "linear-gradient(135deg,#fff5f7,#f0c8d2)",
+    color: "#3c2029",
+    accent: "#b23a5b",
+    mark: "\u2665",
+  },
+  photo: {
+    bg: "linear-gradient(90deg,#ececec 0 43%,#f7f7f7 43% 100%)",
+    color: "#222",
+    accent: "#9f9f9f",
+    mark: "\u25a3",
+  },
+  simple: {
+    bg: "linear-gradient(135deg,#fffdf8,#f2e5d7)",
+    color: "#222",
+    accent: "#b58b62",
+    mark: "\u2014",
+  },
+  dark: {
+    bg: "linear-gradient(135deg,#171717,#303030)",
+    color: "#eee",
+    accent: "#777",
+    mark: "\u2014",
+  },
+  blank: {
+    bg: "#fff",
+    color: "#222",
+    accent: "#d7d7d7",
+    mark: "",
+  },
+};
+const CARD_COPY = {
+  en: {
+    content: "Content",
+    addText: "Add Text",
+    uploadImage: "Upload Image",
+    messageTemplates: "Message Templates",
+    qrPlaceholder: "URL to QR Code",
+    line: "Line",
+    rectangle: "Rectangle",
+    front: "Front",
+    back: "Back",
+    delete: "Del",
+    textStyle: "Text Style",
+    textShapeColor: "Text and shape color",
+    canvas: "Canvas",
+    background: "Background",
+    clearAll: "Clear All",
+    addCard: "Add Card to Cart",
+    preview: "Landscape Card Preview",
+    templates: "Templates",
+    download: "Download PNG",
+    added: "Added",
+    templatesList: [
+      "Happy birthday, wishing you a beautiful year ahead.",
+      "Congratulations, so proud of you.",
+      "With love, today and always.",
+      "Get well soon, sending you flowers and warm wishes.",
+      "Thank you for everything.",
+      "Sorry, please accept this small gift.",
+    ],
+  },
+  ar: {
+    content: "المحتوى",
+    addText: "إضافة نص",
+    uploadImage: "رفع صورة",
+    messageTemplates: "قوالب الرسائل",
+    qrPlaceholder: "رابط رمز QR",
+    line: "خط",
+    rectangle: "مستطيل",
+    front: "للأمام",
+    back: "للخلف",
+    delete: "حذف",
+    textStyle: "تنسيق النص",
+    textShapeColor: "لون النص والشكل",
+    canvas: "البطاقة",
+    background: "الخلفية",
+    clearAll: "مسح الكل",
+    addCard: "أضف البطاقة للسلة",
+    preview: "معاينة البطاقة الأفقية",
+    templates: "القوالب",
+    download: "تحميل PNG",
+    added: "تمت الإضافة",
+    templatesList: [
+      "عيد ميلاد سعيد، أتمنى لك عاماً جميلاً.",
+      "مبارك، فخور بك جداً.",
+      "مع الحب، اليوم ودائماً.",
+      "سلامتك، أرسل لك الورود وأطيب الأمنيات.",
+      "شكراً لك على كل شيء.",
+      "آسف، أرجو أن تقبل هذه الهدية الصغيرة.",
+    ],
+  },
+};
 
 function hexAlpha(hex, a) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -84,8 +241,54 @@ function isTextObject(obj) {
   return ["textbox", "Textbox", "text", "Text"].includes(obj?.type);
 }
 
+function getTemplateText(type, lang, fallback) {
+  if (lang !== "ar") return fallback;
+
+  const arText = {
+    simple: {
+      title: "عنوانك",
+      msg: "اكتب رسالتك هنا",
+      sig: "اسمك",
+    },
+    graduation: {
+      title: "\u062e\u0631\u064a\u062c 2026",
+      msg: "\u0645\u0628\u0631\u0648\u0643 \u0627\u0644\u062a\u062e\u0631\u062c\u060c \u0628\u062f\u0627\u064a\u0629 \u062c\u0645\u064a\u0644\u0629 \u0644\u0641\u0635\u0644 \u062c\u062f\u064a\u062f.",
+      sig: "\u0641\u062e\u0648\u0631\u0648\u0646 \u0628\u0643",
+    },
+    wedding: {
+      title: "\u0628\u062f\u0627\u064a\u0629 \u0627\u0644\u0623\u0628\u062f",
+      msg: "\u0623\u0645\u0646\u064a\u0627\u062a\u0646\u0627 \u0644\u0643\u0645\u0627 \u0628\u0639\u0645\u0631 \u0645\u0644\u064a\u0621 \u0628\u0627\u0644\u0641\u0631\u062d \u0648\u0627\u0644\u0645\u0648\u062f\u0629.",
+      sig: "\u0645\u0639 \u0623\u0637\u064a\u0628 \u0627\u0644\u062a\u0645\u0646\u064a\u0627\u062a",
+    },
+    love: {
+      title: "\u0644\u0623\u062c\u0644\u0643",
+      msg: "\u062a\u0630\u0643\u064a\u0631 \u0635\u063a\u064a\u0631 \u0623\u0646\u0643 \u0645\u062d\u0628\u0648\u0628 \u0627\u0644\u064a\u0648\u0645 \u0648\u062f\u0627\u0626\u0645\u0627\u064b.",
+      sig: "\u0628\u0643\u0644 \u0627\u0644\u062d\u0628",
+    },
+    photo: {
+      title: "بطاقة مع صورة",
+      msg: "أضف صورة وملاحظة قصيرة",
+      sig: "",
+    },
+    dark: {
+      title: "بطاقة بسيطة",
+      msg: "رسالة أنيقة",
+      sig: "مع الحب",
+    },
+    blank: {
+      title: "",
+      msg: "",
+      sig: "",
+    },
+  };
+
+  return arText[type] || fallback;
+}
+
 function CardBuilderPage() {
-  const { tr, isMobile } = useApp();
+  const { tr, isMobile, addToCart, lang } = useApp();
+  const copy = CARD_COPY[lang] || CARD_COPY.en;
+  const templateLabels = TEMPLATE_LABELS[lang] || TEMPLATE_LABELS.en;
   const canvasRef = useRef(null);
   const fabricRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -99,8 +302,10 @@ function CardBuilderPage() {
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
-  const [activeTpl, setActiveTpl] = useState("simple");
+  const [activeTpl, setActiveTpl] = useState("graduation");
   const [previewScale, setPreviewScale] = useState(1);
+  const [selectedMessage, setSelectedMessage] = useState("");
+  const [addedToCart, setAddedToCart] = useState(false);
 
   const syncControls = useCallback((obj) => {
     if (!obj) return;
@@ -120,7 +325,7 @@ function CardBuilderPage() {
     }
   }, []);
 
-  const addRect = useCallback((left, top, width, height, fill, stroke, strokeWidth, dash, selectable) => {
+  const addRect = useCallback((left, top, width, height, fill, stroke, strokeWidth, dash, selectable, extra = {}) => {
     const canvas = fabricRef.current;
     if (!canvas) return null;
 
@@ -137,6 +342,8 @@ function CardBuilderPage() {
       ry: 3,
       selectable,
       evented: selectable,
+      strokeUniform: true,
+      ...extra,
     });
 
     canvas.add(rect);
@@ -162,8 +369,11 @@ function CardBuilderPage() {
     const canvas = fabricRef.current;
     const t = TPLS[type];
     if (!canvas || !t) return;
+    const text = getTemplateText(type, lang, t);
 
     canvas.clear();
+    canvas.discardActiveObject();
+    canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
     canvas.backgroundColor = t.bg;
     setBgColor(t.bg);
     setActiveTpl(type);
@@ -172,19 +382,70 @@ function CardBuilderPage() {
 
     const w = CANVAS_WIDTH;
     const h = CANVAS_HEIGHT;
+    const rtl = lang === "ar";
+    const direction = rtl ? "rtl" : "ltr";
+    const textAlign = rtl ? "right" : "left";
+    const centeredText = rtl ? "center" : "center";
+    const deco = { selectable: true, evented: true };
+
+    const addBox = (value, opts) => {
+      const box = new fabric.Textbox(value, {
+        fontFamily: t.font,
+        fill: t.tc,
+        direction,
+        editable: true,
+        splitByGrapheme: rtl,
+        ...opts,
+      });
+      canvas.add(box);
+      return box;
+    };
+
+    const addCircle = (left, top, radius, fill, stroke, strokeWidth = 1.5) => {
+      const circle = new fabric.Circle({
+        left,
+        top,
+        radius,
+        fill,
+        stroke,
+        strokeWidth,
+        ...deco,
+      });
+      canvas.add(circle);
+      return circle;
+    };
+
+    const addMark = (value, left, top, size, fill, angle = 0) => {
+      const mark = new fabric.Text(value, {
+        left,
+        top,
+        fontSize: size,
+        fontFamily: "'Cormorant Garamond', Georgia, serif",
+        fill,
+        angle,
+        ...deco,
+      });
+      canvas.add(mark);
+      return mark;
+    };
+    const addCenteredRect = (inset, fill, stroke, strokeWidth, dash = null) =>
+      addRect(w / 2, h / 2, w - inset * 2, h - inset * 2, fill, stroke, strokeWidth, dash, true, {
+        originX: "center",
+        originY: "center",
+      });
 
     if (t.layout === "blank") {
-      addRect(24, 24, w - 48, h - 48, "transparent", t.ac, 1, [0, 0], false);
+      addCenteredRect(26, "transparent", t.ac, 1.2);
       canvas.requestRenderAll();
       return;
     }
 
-    addRect(24, 24, w - 48, h - 48, "transparent", t.ac, 1.5, [0, 0], false);
+    addCenteredRect(24, "transparent", t.ac, 1.5);
 
     if (t.layout === "photo") {
-      addRect(44, 44, 250, h - 88, hexAlpha(t.ac, 0.12), t.ac, 1.2, [7, 5], false);
+      addRect(48, 52, 236, h - 104, hexAlpha(t.ac, 0.12), t.ac, 1.2, [8, 6], false);
       canvas.add(new fabric.Text("Upload Image", {
-        left: 169,
+        left: 166,
         top: h / 2,
         fontSize: 14,
         fontFamily: "sans-serif",
@@ -194,63 +455,161 @@ function CardBuilderPage() {
         selectable: false,
         evented: false,
       }));
-      canvas.add(new fabric.Textbox(t.title, {
-        left: 330,
-        top: 92,
-        width: 210,
+      addBox(text.title, {
+        left: 328,
+        top: 78,
+        width: 220,
         fontSize: 30,
-        fontFamily: t.font,
-        fill: t.tc,
         fontWeight: "700",
-        textAlign: "left",
-      }));
-      canvas.add(new fabric.Textbox(t.msg, {
-        left: 330,
-        top: 165,
-        width: 210,
+        textAlign,
+      });
+      addLine(328, 142, 510, 142, t.ac, 1.4, true);
+      addBox(text.msg, {
+        left: 328,
+        top: 172,
+        width: 220,
         fontSize: 18,
-        fontFamily: t.font,
-        fill: t.tc,
         lineHeight: 1.35,
-        textAlign: "left",
-      }));
-      addLine(330, 246, 500, 246, t.ac, 1.2, false);
-    } else {
-      canvas.add(new fabric.Textbox(t.title, {
-        left: 58,
-        top: 84,
-        width: w - 116,
-        fontSize: 34,
-        fontFamily: t.font,
-        fill: t.tc,
+        textAlign,
+      });
+    } else if (t.layout === "graduation") {
+      addRect(44, 44, 132, h - 88, "#162036", t.ac, 1.5, null, true);
+      addLine(204, 96, 526, 96, t.ac, 1.5, true);
+      addLine(204, 276, 526, 276, t.ac, 1.2, true);
+      addMark("\u25c6", 82, 86, 34, t.ac, 45);
+      addMark("\u2726", 110, 172, 28, "#f2dfb6", -12);
+      addMark("\u25cf", 82, 272, 18, "#f2dfb6", 0);
+      addMark("\u25cf", 132, 304, 12, t.ac, 0);
+      addBox(text.title, {
+        left: 218,
+        top: 118,
+        width: 310,
+        fontSize: 42,
+        fontWeight: "700",
+        textAlign,
+      });
+      addBox(text.msg, {
+        left: 218,
+        top: 190,
+        width: 306,
+        fontSize: 20,
+        lineHeight: 1.35,
+        textAlign,
+      });
+      addBox(text.sig, {
+        left: 218,
+        top: 302,
+        width: 306,
+        fontSize: 17,
+        fill: t.ac,
+        fontStyle: "italic",
+        textAlign,
+      });
+    } else if (t.layout === "wedding") {
+      addCenteredRect(48, "rgba(255,255,255,.42)", t.ac, 1);
+      addCircle(88, 74, 46, "rgba(255,255,255,.1)", hexAlpha(t.ac, 0.55), 1.4);
+      addCircle(122, 74, 46, "rgba(255,255,255,.1)", hexAlpha(t.ac, 0.55), 1.4);
+      addLine(188, 140, 412, 140, t.ac, 1.2, true);
+      addMark("\u273d", 464, 54, 42, hexAlpha(t.ac, 0.55), -16);
+      addMark("\u273d", 64, 292, 34, hexAlpha(t.ac, 0.4), 12);
+      addBox(text.title, {
+        left: w / 2,
+        top: 158,
+        width: w - 150,
+        fontSize: 44,
         fontWeight: "700",
         textAlign: "center",
-      }));
-      addLine(200, 150, 400, 150, t.ac, 1.2, false);
-      canvas.add(new fabric.Textbox(t.msg, {
-        left: 80,
-        top: 180,
-        width: w - 160,
-        fontSize: 22,
-        fontFamily: t.font,
-        fill: t.tc,
-        textAlign: "center",
+        originX: "center",
+      });
+      addBox(text.msg, {
+        left: w / 2,
+        top: 226,
+        width: w - 180,
+        fontSize: 21,
         lineHeight: 1.35,
-      }));
-      canvas.add(new fabric.Textbox(t.sig, {
-        left: 80,
-        top: 292,
-        width: w - 160,
-        fontSize: 16,
-        fontFamily: t.font,
+        textAlign: "center",
+        originX: "center",
+      });
+      addBox(text.sig, {
+        left: w / 2,
+        top: 318,
+        width: w - 180,
+        fontSize: 17,
         fill: t.ac,
         textAlign: "center",
         fontStyle: "italic",
-      }));
+        originX: "center",
+      });
+    } else if (t.layout === "love") {
+      addCenteredRect(36, "rgba(255,255,255,.36)", t.ac, 1.2);
+      addCircle(62, 58, 58, hexAlpha(t.ac, 0.08), hexAlpha(t.ac, 0.25), 1);
+      addCircle(474, 244, 66, hexAlpha(t.ac, 0.1), hexAlpha(t.ac, 0.28), 1);
+      addMark("\u2665", 92, 86, 62, hexAlpha(t.ac, 0.7), -10);
+      addMark("\u2665", 458, 82, 30, hexAlpha(t.ac, 0.48), 12);
+      addLine(214, 154, 386, 154, t.ac, 1.3, true);
+      addBox(text.title, {
+        left: w / 2,
+        top: 92,
+        width: w - 180,
+        fontSize: 52,
+        fontWeight: "700",
+        textAlign: "center",
+        originX: "center",
+      });
+      addBox(text.msg, {
+        left: w / 2,
+        top: 184,
+        width: w - 170,
+        fontSize: 23,
+        fontFamily: "Cormorant Garamond",
+        lineHeight: 1.32,
+        textAlign: "center",
+        originX: "center",
+      });
+      addBox(text.sig, {
+        left: w / 2,
+        top: 304,
+        width: w - 180,
+        fontSize: 25,
+        fill: t.ac,
+        textAlign: "center",
+        originX: "center",
+      });
+    } else {
+      addLine(210, 150, 390, 150, t.ac, 1.2, true);
+      addBox(text.title, {
+        left: w / 2,
+        top: 82,
+        width: w - 140,
+        fontSize: 36,
+        fontWeight: "700",
+        textAlign: centeredText,
+        originX: "center",
+      });
+      addBox(text.msg, {
+        left: w / 2,
+        top: 182,
+        width: w - 160,
+        fontSize: 22,
+        textAlign: centeredText,
+        lineHeight: 1.35,
+        originX: "center",
+      });
+      addBox(text.sig, {
+        left: w / 2,
+        top: 294,
+        width: w - 160,
+        fontSize: 17,
+        fill: t.ac,
+        textAlign: centeredText,
+        fontStyle: "italic",
+        originX: "center",
+      });
     }
 
+    canvas.calcOffset();
     canvas.requestRenderAll();
-  }, [addLine, addRect]);
+  }, [addLine, addRect, lang]);
 
   useEffect(() => {
     const canvasEl = canvasRef.current;
@@ -286,7 +645,7 @@ function CardBuilderPage() {
     };
 
     document.addEventListener("keydown", onKey);
-    const timer = setTimeout(() => applyTpl("simple"), 100);
+    const timer = setTimeout(() => applyTpl("graduation"), 100);
 
     return () => {
       clearTimeout(timer);
@@ -329,7 +688,7 @@ function CardBuilderPage() {
     if (!canvas) return;
 
     const rtl = RTL_FONTS.includes(activeFont);
-    const text = new fabric.Textbox("Your Text", {
+    const text = new fabric.Textbox(lang === "ar" ? "نصك هنا" : "Your Text", {
       left: 50,
       top: 80,
       width: canvas.width - 100,
@@ -344,7 +703,74 @@ function CardBuilderPage() {
     canvas.add(text);
     canvas.setActiveObject(text);
     canvas.renderAll();
-  }, [activeFont, fontSize, textColor]);
+  }, [activeFont, fontSize, lang, textColor]);
+
+  const insertMessageTemplate = useCallback((message) => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+
+    setSelectedMessage(message);
+    const active = canvas.getActiveObject();
+    if (isTextObject(active)) {
+      active.set("text", message);
+      canvas.requestRenderAll();
+      return;
+    }
+
+    const text = new fabric.Textbox(message, {
+      left: 80,
+      top: 180,
+      width: canvas.width - 160,
+      fontSize: 22,
+      fontFamily: activeFont,
+      fill: textColor,
+      textAlign: lang === "ar" ? "right" : "center",
+      direction: lang === "ar" ? "rtl" : "ltr",
+      lineHeight: 1.35,
+      editable: true,
+    });
+
+    canvas.add(text);
+    canvas.setActiveObject(text);
+    canvas.renderAll();
+  }, [activeFont, lang, textColor]);
+
+  const addCardToCart = useCallback(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+
+    const message =
+      selectedMessage ||
+      canvas
+        .getObjects()
+        .filter(isTextObject)
+        .map((obj) => obj.text)
+        .filter(Boolean)
+        .join(" ")
+        .slice(0, 180);
+
+    addToCart(
+      {
+        id: `card-${Date.now()}`,
+        name: { en: "Custom Gift Card", ar: "بطاقة هدية مخصصة" },
+        price: 15000,
+        icon: "💌",
+        category: "card",
+        type: "card",
+        cardDesign: activeTpl,
+        cardMessage: message,
+        cardFont: activeFont,
+        description: {
+          en: "Custom card design with a gift message.",
+          ar: "تصميم بطاقة مخصص مع رسالة هدية.",
+        },
+      },
+      1
+    );
+
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 1800);
+  }, [activeFont, activeTpl, addToCart, selectedMessage]);
 
   const handleImg = useCallback((e) => {
     const file = e.target.files?.[0];
@@ -676,6 +1102,7 @@ function CardBuilderPage() {
 
   return (
     <div style={{ paddingTop: 90, minHeight: "100vh", background: V.bg, direction: "ltr", fontFamily: "'Cairo', sans-serif", fontSize: 12, color: V.text }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;700;800&family=Cinzel:wght@500;700&family=Dancing+Script:wght@500;700&family=Lora:wght@400;700&family=Playfair+Display:wght@500;700&family=Tajawal:wght@400;700&display=swap');`}</style>
       <Section style={{ paddingTop: 40, paddingBottom: 80, maxWidth: 1400 }}>
         <div style={{ textAlign: "center", marginBottom: 30 }}>
           <Tag>{tr.cardBuilder || "Custom Card Builder"}</Tag>
@@ -689,29 +1116,50 @@ function CardBuilderPage() {
           minHeight: isMobile ? "auto" : 600,
         }}>
           <div style={isMobile ? { ...sidebar, borderRight: "none", borderBottom: `1px solid ${V.border}` } : sidebar}>
-            <div style={lbl}>Content</div>
-            <button style={{ ...btn, marginBottom: 5 }} onClick={addText}>Add Text</button>
-            <button style={{ ...btnO, marginBottom: 5 }} onClick={() => fileInputRef.current?.click()}><FaUpload /> Upload Image</button>
+            <div style={lbl}>{copy.content}</div>
+            <button style={{ ...btn, marginBottom: 5 }} onClick={addText}>{copy.addText}</button>
+            <button style={{ ...btnO, marginBottom: 5 }} onClick={() => fileInputRef.current?.click()}><FaUpload /> {copy.uploadImage}</button>
             <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImg} />
 
+            <div style={{ height: 1, background: V.border, margin: "2px 0" }} />
+            <div style={lbl}>{copy.messageTemplates}</div>
+            {copy.templatesList.map((message) => (
+              <button
+                key={message}
+                style={{
+                  ...btnO,
+                  justifyContent: "flex-start",
+                  textAlign: lang === "ar" ? "right" : "left",
+                  lineHeight: 1.35,
+                  textTransform: "none",
+                  letterSpacing: ".3px",
+                  fontFamily: "'Cairo', sans-serif",
+                  marginBottom: 5,
+                }}
+                onClick={() => insertMessageTemplate(message)}
+              >
+                {message}
+              </button>
+            ))}
+
             <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
-              <input style={{ ...inp, flex: 1 }} placeholder="URL to QR Code" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} />
+              <input style={{ ...inp, flex: 1 }} placeholder={copy.qrPlaceholder} value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} />
               <button style={{ ...btnO, width: "auto", padding: "7px 10px", fontSize: 9, whiteSpace: "nowrap" }} onClick={genQR}>QR</button>
             </div>
 
             <div style={toolGrid}>
-              <button style={btnO} onClick={addUserLine}><FaMinus /> Line</button>
-              <button style={btnO} onClick={addUserRect}><FaRegSquare /> Rectangle</button>
+              <button style={btnO} onClick={addUserLine}><FaMinus /> {copy.line}</button>
+              <button style={btnO} onClick={addUserRect}><FaRegSquare /> {copy.rectangle}</button>
             </div>
 
             <div style={{ display: "flex", gap: 5, marginBottom: 5 }}>
-              <button style={btnO} onClick={bringFwd}>Front</button>
-              <button style={btnO} onClick={sendBck}>Back</button>
-              <button style={btnD} onClick={delObj}>Del</button>
+              <button style={btnO} onClick={bringFwd}>{copy.front}</button>
+              <button style={btnO} onClick={sendBck}>{copy.back}</button>
+              <button style={btnD} onClick={delObj}>{copy.delete}</button>
             </div>
 
             <div style={{ height: 1, background: V.border, margin: "2px 0" }} />
-            <div style={lbl}>Text Style</div>
+            <div style={lbl}>{copy.textStyle}</div>
 
             <select style={{ ...inp, marginBottom: 5 }} value={activeFont} onChange={(e) => changeFont(e.target.value)}>
               <option value="Playfair Display">Playfair Display</option>
@@ -745,22 +1193,25 @@ function CardBuilderPage() {
 
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
               <input type="color" value={textColor} onChange={(e) => chgTxtColor(e.target.value)} style={{ width: 34, height: 26, border: `1px solid ${V.border}`, borderRadius: 5, padding: 2, flexShrink: 0 }} />
-              <span style={{ fontSize: 10, color: V.textMuted, flex: 1 }}>Text and shape color</span>
+              <span style={{ fontSize: 10, color: V.textMuted, flex: 1 }}>{copy.textShapeColor}</span>
             </div>
 
             <div style={{ height: 1, background: V.border, margin: "2px 0" }} />
-            <div style={lbl}>Canvas</div>
+            <div style={lbl}>{copy.canvas}</div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
               <input type="color" value={bgColor} onChange={(e) => chgBg(e.target.value)} style={{ width: 34, height: 26, border: `1px solid ${V.border}`, borderRadius: 5, padding: 2, flexShrink: 0 }} />
-              <span style={{ fontSize: 10, color: V.textMuted, flex: 1 }}>Background</span>
+              <span style={{ fontSize: 10, color: V.textMuted, flex: 1 }}>{copy.background}</span>
             </div>
 
-            <button style={{ ...btnD, marginBottom: 5 }} onClick={clearAll}><FaTrash /> Clear All</button>
+            <button style={{ ...btnD, marginBottom: 5 }} onClick={clearAll}><FaTrash /> {copy.clearAll}</button>
 
             <div style={{ flex: 1 }} />
+            <button style={{ ...btnO, padding: 11, fontSize: 11, marginTop: 10 }} onClick={addCardToCart}>
+              {addedToCart ? copy.added : copy.addCard}
+            </button>
             <button style={{ ...btn, background: "linear-gradient(135deg, #c8956c, #8b6914)", color: "#fff", padding: 11, fontSize: 11, marginTop: 10 }} onClick={dlCard}>
-              <FaDownload /> Download PNG
+              <FaDownload /> {copy.download}
             </button>
           </div>
 
@@ -776,7 +1227,7 @@ function CardBuilderPage() {
             minHeight: isMobile ? 280 : 0,
           }}>
             <div style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: 4, color: V.textMuted, textTransform: "uppercase", flexShrink: 0 }}>
-              Landscape Card Preview
+              {copy.preview}
             </div>
             <div style={{
               background: "linear-gradient(45deg, #161616 25%, transparent 25%), linear-gradient(-45deg,#161616 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #161616 75%), linear-gradient(-45deg, transparent 75%, #161616 75%)",
@@ -812,38 +1263,76 @@ function CardBuilderPage() {
           </div>
 
           <div style={isMobile ? { ...sidebarRight, borderLeft: "none", borderTop: `1px solid ${V.border}` } : sidebarRight}>
-            <div style={lbl}>Templates</div>
-            {[
-              { key: "blank", name: "Blank", sub: "Plain landscape", style: { background: "#fff", color: "#222" } },
-              { key: "simple", name: "Simple", sub: "Title and message", style: { background: "#fffdf8", color: "#222" } },
-              { key: "photo", name: "Photo", sub: "Image and note", style: { background: "#f7f7f7", color: "#222" } },
-              { key: "dark", name: "Dark", sub: "Simple dark", style: { background: "#171717", color: "#eee", borderColor: "#333" } },
-            ].map((tpl) => (
+            <div style={lbl}>{copy.templates}</div>
+            {TEMPLATE_ORDER.map((templateKey) => {
+              const thumb = TEMPLATE_THUMBS[templateKey] || TEMPLATE_THUMBS.simple;
+              const tpl = {
+                key: templateKey,
+                name: templateLabels[templateKey][0],
+                sub: templateLabels[templateKey][1],
+                style: thumb,
+              };
+
+              return (
               <div key={tpl.key} onClick={() => applyTpl(tpl.key)} style={{
                 width: "100%",
-                height: 90,
+                minHeight: 104,
                 borderRadius: 8,
-                border: `2px solid ${activeTpl === tpl.key ? V.accent : (tpl.style.borderColor || V.border)}`,
+                border: `2px solid ${activeTpl === tpl.key ? V.accent : V.border}`,
                 cursor: "pointer",
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 4,
+                alignItems: "stretch",
+                justifyContent: "space-between",
+                gap: 8,
                 transition: "all .2s",
                 position: "relative",
                 overflow: "hidden",
                 marginBottom: 8,
-                ...tpl.style,
+                padding: 10,
+                background: tpl.style.bg,
+                color: tpl.style.color,
                 boxShadow: activeTpl === tpl.key ? `0 0 0 1px ${V.accent}` : "none",
               }}>
-                <FaImage style={{ fontSize: 14, opacity: 0.75 }} />
-                <div style={{ fontSize: 11, fontWeight: 700, fontFamily: "'Cinzel', serif", letterSpacing: 2, zIndex: 1 }}>
-                  {tpl.name}
+                <div style={{
+                  height: 42,
+                  border: `1px solid ${hexAlpha(tpl.style.accent, 0.65)}`,
+                  borderRadius: 6,
+                  position: "relative",
+                  background: "rgba(255,255,255,.22)",
+                  overflow: "hidden",
+                }}>
+                  <span style={{
+                    position: "absolute",
+                    left: 14,
+                    top: 7,
+                    fontSize: 21,
+                    color: tpl.style.accent,
+                    fontFamily: "'Cormorant Garamond', Georgia, serif",
+                    lineHeight: 1,
+                  }}>
+                    {tpl.style.mark}
+                  </span>
+                  <span style={{
+                    position: "absolute",
+                    right: 14,
+                    bottom: 10,
+                    width: 78,
+                    height: 2,
+                    borderRadius: 99,
+                    background: tpl.style.accent,
+                    opacity: 0.7,
+                  }} />
                 </div>
-                <div style={{ fontSize: 9, letterSpacing: 1, zIndex: 1, opacity: 0.75 }}>{tpl.sub}</div>
+                <div style={{ zIndex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, fontFamily: "'Cinzel', serif", letterSpacing: 1.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {tpl.name}
+                  </div>
+                  <div style={{ fontSize: 10, letterSpacing: .6, opacity: 0.78, marginTop: 3, lineHeight: 1.25 }}>{tpl.sub}</div>
+                </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </Section>

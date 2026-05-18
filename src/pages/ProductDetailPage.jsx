@@ -4,6 +4,16 @@ import { C, FS, FB } from "../constants/theme";
 import Section from "../components/ui/Section";
 import { supabase } from "../lib/supabase";
 import { formatCurrency } from "../constants/options";
+import AvailabilityNote from "../components/ui/AvailabilityNote";
+import {
+  getProductDescription,
+  getProductImage,
+  getProductMeta,
+  getProductName,
+  optionLabel,
+} from "../lib/product";
+import { buildProductWhatsAppMessage, createWhatsAppLink } from "../lib/whatsapp";
+import { FaWhatsapp } from "react-icons/fa";
 
 /* ============================================================
    Horizontal Picker
@@ -153,12 +163,22 @@ function ProductDetailPage() {
   const {
     tr,
     navigate,
-    selectedProduct: product,
+    selectedProduct,
     addToCart,
     lang,
     categories,
     isMobile,
+    products,
   } = useApp();
+
+  const productIdFromPath = window.location.pathname.match(/^\/product\/([^/]+)/)?.[1];
+  const product =
+    selectedProduct ||
+    products.find((item) => String(item.id) === String(productIdFromPath));
+  const meta = getProductMeta(product);
+  const productName = getProductName(product, lang);
+  const productDescription = getProductDescription(product, lang);
+  const productImage = getProductImage(product);
 
   const [ribbons, setRibbons] = useState([]);
   const [wraps, setWraps] = useState([]);
@@ -176,6 +196,9 @@ function ProductDetailPage() {
   const [showCardModal, setShowCardModal] = useState(false);
   const [cardChoice, setCardChoice] = useState(null);
   const [cardText, setCardText] = useState("");
+  const customizedUnitPrice = product?.count
+    ? Math.round((product.price / product.count) * flowerCount * 100) / 100
+    : product?.price || 0;
 
   /* ============================================================
      Fetch data
@@ -242,12 +265,19 @@ function ProductDetailPage() {
     addToCart(
       {
         ...product,
+        price: customizedUnitPrice,
         ribbon,
         wrap,
         msg,
         flowerCount,
         cardShape: cardChoice,
         cardText,
+        selectedOptions: {
+          ribbon,
+          wrap,
+          flowerCount,
+          cardShape: cardChoice,
+        },
       },
       qty
     );
@@ -266,6 +296,7 @@ function ProductDetailPage() {
     flowerCount,
     cardChoice,
     cardText,
+    customizedUnitPrice,
     qty,
   ]);
 
@@ -290,6 +321,18 @@ function ProductDetailPage() {
       </div>
     );
   }
+
+  const whatsappUrl = createWhatsAppLink(
+    buildProductWhatsAppMessage(product, {
+      qty,
+      lang,
+      price: customizedUnitPrice * qty,
+      ribbon,
+      wrap,
+      flowerCount,
+      cardText: cardText || msg,
+    })
+  );
 
   return (
     <div
@@ -358,10 +401,10 @@ function ProductDetailPage() {
     padding: isMobile ? 12 : 20,
   }}
 >
-  {product.image_url ? (
+  {productImage ? (
     <img
-      src={product.image_url}
-      alt={product.name[lang]}
+      src={productImage}
+      alt={productName}
       style={{
         width: "100%",
         height: "auto",
@@ -380,7 +423,7 @@ function ProductDetailPage() {
         fontSize: isMobile ? "6rem" : "9rem",
       }}
     >
-      {product.icon}
+      {product?.icon}
     </span>
   )}
 </div>
@@ -402,7 +445,7 @@ function ProductDetailPage() {
               }}
             >
               {categories.find((c) => c.id === product.category)?.icon}{" "}
-              {tr[product.category]}
+              {tr[product.category] || product.category}
             </span>
 
             <h1
@@ -419,7 +462,7 @@ function ProductDetailPage() {
                 lineHeight: 1.2,
               }}
             >
-              {product.name[lang]}
+              {productName}
             </h1>
 
             <p
@@ -430,8 +473,10 @@ function ProductDetailPage() {
                 fontSize: isMobile ? ".9rem" : "1rem",
               }}
             >
-              {product.description[lang]}
+              {productDescription}
             </p>
+
+            <ProductInfoSections meta={meta} lang={lang} tr={tr} isMobile={isMobile} />
 
             {/* FLOWER COUNT */}
             <div style={{ marginBottom: 20 }}>
@@ -634,6 +679,8 @@ function ProductDetailPage() {
               </div>
             </div>
 
+            <AvailabilityNote style={{ marginBottom: 22 }} />
+
             {/* QTY + PRICE */}
             <div
               style={{
@@ -702,12 +749,7 @@ function ProductDetailPage() {
                   fontWeight: 600,
                 }}
               >
-                {formatCurrency(Math.round(
-                  (product.price / product.count) *
-                    flowerCount *
-                    qty *
-                    100
-                ) / 100)}
+                {formatCurrency(customizedUnitPrice * qty)}
               </span>
             </div>
 
@@ -721,11 +763,40 @@ function ProductDetailPage() {
 
                 background: added
                   ? "linear-gradient(135deg,#2a6a3a,#1a4a2a)"
-                  : undefined,
+                : undefined,
               }}
             >
-              {added ? tr.successAdd : tr.customize}
+              {added ? tr.successAdd : tr.addToCart}
             </button>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+                gap: 10,
+                marginTop: 10,
+              }}
+            >
+              <button className="btn-s" onClick={() => navigate("ai-builder")}>
+                {lang === "ar" ? "خصص هذه الباقة" : "Customize this Bouquet"}
+              </button>
+              <a
+                className="btn-s"
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  textDecoration: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                }}
+              >
+                <FaWhatsapp aria-hidden="true" />
+                {lang === "ar" ? "اطلب عبر واتساب" : "Order on WhatsApp"}
+              </a>
+            </div>
           </div>
         </div>
       </Section>
@@ -821,6 +892,69 @@ function ProductDetailPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ProductInfoSections({ meta, lang, tr, isMobile }) {
+  const detailRows = [
+    [lang === "ar" ? "الحجم" : "Size", meta.size],
+    [lang === "ar" ? "الألوان الرئيسية" : "Main colors", meta.colors.map((c) => optionLabel(c, lang)).join(", ")],
+    [lang === "ar" ? "التغليف" : "Wrapping style", meta.wrappingStyle],
+    [tr.availability || "Availability", optionLabel("dailyFlowers", lang)],
+  ];
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+        gap: 10,
+        marginBottom: 24,
+      }}
+    >
+      <InfoBox title={lang === "ar" ? "تتضمن" : "Includes"} items={meta.includes} />
+      <InfoBox
+        title={lang === "ar" ? "مناسبة لـ" : "Good for"}
+        items={meta.occasion.length ? meta.occasion.map((item) => optionLabel(item, lang)) : ["-"]}
+      />
+      <div
+        style={{
+          border: `1px solid ${C.border}`,
+          background: "rgba(255,255,255,.025)",
+          borderRadius: 8,
+          padding: 14,
+        }}
+      >
+        <div style={{ color: C.accent, fontSize: ".75rem", marginBottom: 10 }}>
+          {lang === "ar" ? "تفاصيل الباقة" : "Bouquet details"}
+        </div>
+        {detailRows.map(([label, value]) => (
+          <div key={label} style={{ color: C.creamD, fontSize: ".78rem", lineHeight: 1.6 }}>
+            <strong style={{ color: C.cream }}>{label}:</strong> {value}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function InfoBox({ title, items }) {
+  return (
+    <div
+      style={{
+        border: `1px solid ${C.border}`,
+        background: "rgba(255,255,255,.025)",
+        borderRadius: 8,
+        padding: 14,
+      }}
+    >
+      <div style={{ color: C.accent, fontSize: ".75rem", marginBottom: 10 }}>{title}</div>
+      <ul style={{ color: C.creamD, fontSize: ".78rem", lineHeight: 1.7, paddingInlineStart: 18 }}>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
     </div>
   );
 }

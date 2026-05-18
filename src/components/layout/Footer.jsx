@@ -1,10 +1,18 @@
 import React from "react";
 import { useApp } from "../../contexts/AppContext";
-import { C, FB } from "../../constants/theme";
+import { C,  FB } from "../../constants/theme";
 import Section from "../ui/Section";
+import { createWhatsAppLink } from "../../lib/whatsapp";
 
 function Footer() {
-  const { tr, navigate, isMobile } = useApp();
+  const { tr, navigate, isMobile, lang } = useApp();
+  const policyItems = [
+    tr.orderPolicy1,
+    tr.orderPolicy2,
+    tr.orderPolicy3,
+    tr.orderPolicy4,
+    tr.orderPolicy5,
+  ];
 
   return (
     <footer
@@ -86,8 +94,9 @@ function Footer() {
                 margin: isMobile ? "0 auto" : 0,
               }}
             >
-              Luxury handcrafted bouquets for every precious
-              moment.
+              {lang === "ar"
+                ? "باقات فاخرة تُحضّر يدوياً لكل لحظة ثمينة."
+                : "Luxury handcrafted bouquets for every precious moment."}
             </p>
           </div>
 
@@ -112,7 +121,7 @@ function Footer() {
                 marginBottom: 16,
               }}
             >
-              Navigation
+              {lang === "ar" ? "التنقل" : "Navigation"}
             </div>
 
             {["home", "shop", "ai-builder", "cart"].map(
@@ -155,7 +164,7 @@ function Footer() {
                       C.creamD)
                   }
                 >
-                  {tr[p.replace("-", "")] || tr[p]}
+                  {p === "ai-builder" ? tr.aiBuilder : tr[p]}
                 </button>
               )
             )}
@@ -182,7 +191,7 @@ function Footer() {
                 marginBottom: 16,
               }}
             >
-              Contact
+              {lang === "ar" ? "واتساب" : "WhatsApp"}
             </div>
 
             <p
@@ -196,12 +205,62 @@ function Footer() {
                 wordBreak: "break-word",
               }}
             >
-              📱 WhatsApp: +963 965 578 857
+              WhatsApp: +963 965 578 857
               <br />
-              📧 hello@bloomgrace.com
+              hello@soulflower.com
               <br />
-              📍 Aleppo, Syria
+              {lang === "ar" ? "حلب، سوريا" : "Aleppo, Syria"}
             </p>
+            <a
+              className="btn-s"
+              href={createWhatsAppLink("Hello Soul Flower, I would like to confirm a flower order.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex",
+                textDecoration: "none",
+                marginTop: 12,
+                padding: "8px 14px",
+              }}
+            >
+              WhatsApp
+            </a>
+          </div>
+        </div>
+
+        <div
+          style={{
+            border: `1px solid ${C.border}`,
+            background: "rgba(255,255,255,.025)",
+            borderRadius: 8,
+            padding: isMobile ? 16 : 20,
+            marginBottom: 24,
+          }}
+        >
+          <div
+            style={{
+              fontSize: ".72rem",
+              letterSpacing: ".15em",
+              textTransform: "uppercase",
+              color: C.accent,
+              marginBottom: 12,
+              textAlign: isMobile ? "center" : "left",
+            }}
+          >
+            {tr.beforeYouOrder || (lang === "ar" ? "قبل الطلب" : "Before you order")}
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(5, 1fr)",
+              gap: 10,
+            }}
+          >
+            {policyItems.map((item) => (
+              <div key={item} style={{ color: C.creamD, fontSize: ".78rem", lineHeight: 1.55 }}>
+                {item}
+              </div>
+            ))}
           </div>
         </div>
 

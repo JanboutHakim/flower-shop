@@ -23,6 +23,7 @@ const PAGE_PATHS = {
   "card-builder": "/card-builder",
   cart: "/cart",
   checkout: "/checkout",
+  contact: "/contact",
   dashboard: "/dashboard",
   "dashboard-login": "/dashboard",
 };
@@ -36,17 +37,23 @@ const PATH_PAGES = {
   "/card-builder": "card-builder",
   "/cart": "cart",
   "/checkout": "checkout",
+  "/contact": "contact",
   "/dashboard": "dashboard",
 };
 
 function pageFromPath(pathname, isAuthed) {
   const cleanPath = pathname.replace(/\/$/, "") || "/";
+  if (cleanPath.startsWith("/product/")) return "product";
   const pathPage = PATH_PAGES[cleanPath] || "home";
   return pathPage === "dashboard" && !isAuthed ? "dashboard-login" : pathPage;
 }
 
-function updateBrowserPath(nextPage) {
-  const nextPath = PAGE_PATHS[nextPage] || "/";
+function updateBrowserPath(nextPage, extra = {}) {
+  const productId = extra.product?.id || extra.productId;
+  const nextPath =
+    nextPage === "product" && productId
+      ? `/product/${productId}`
+      : PAGE_PATHS[nextPage] || "/";
   if (window.location.pathname !== nextPath) {
     window.history.pushState({ page: nextPage }, "", nextPath);
   }
@@ -221,7 +228,7 @@ export function AppProvider({ children }) {
       if (extra.product) setSelectedProduct(extra.product);
       if (extra.category) setShopCategory(extra.category);
       setPage(p);
-      updateBrowserPath(p);
+      updateBrowserPath(p, extra);
       window.scrollTo(0, 0);
     },
     [auth]
@@ -229,18 +236,23 @@ export function AppProvider({ children }) {
 
   const addToCart = useCallback((product, qty = 1) => {
     setCart((prev) => {
-      const key = `${product.id}-${product.ribbon || ""}-${product.wrap || ""}-${product.cardText || ""}`;
+      const key =
+        product.cartKey ||
+        `${product.id}-${product.ribbon || ""}-${product.wrap || ""}-${product.cardText || ""}-${product.msg || ""}`;
       const existing = prev.find(
-        (i) => `${i.id}-${i.ribbon || ""}-${i.wrap || ""}-${i.cardText || ""}` === key
+        (i) =>
+          (i.cartKey ||
+            `${i.id}-${i.ribbon || ""}-${i.wrap || ""}-${i.cardText || ""}-${i.msg || ""}`) === key
       );
       if (existing) {
         return prev.map((i) =>
-          `${i.id}-${i.ribbon || ""}-${i.wrap || ""}-${i.cardText || ""}` === key
+          (i.cartKey ||
+            `${i.id}-${i.ribbon || ""}-${i.wrap || ""}-${i.cardText || ""}-${i.msg || ""}`) === key
             ? { ...i, qty: i.qty + qty }
             : i
         );
       }
-      return [...prev, { ...product, qty }];
+      return [...prev, { ...product, cartKey: key, qty }];
     });
     setCartNotification({
       id: Date.now(),
@@ -253,8 +265,28 @@ export function AppProvider({ children }) {
     setCartNotification(null);
   }, []);
 
-  const removeFromCart = useCallback((id) => {
-    setCart((prev) => prev.filter((i) => i.id !== id));
+  const removeFromCart = useCallback((keyOrId) => {
+    setCart((prev) =>
+      prev.filter(
+        (i) =>
+          (i.cartKey ||
+            `${i.id}-${i.ribbon || ""}-${i.wrap || ""}-${i.cardText || ""}-${i.msg || ""}`) !== keyOrId &&
+          i.id !== keyOrId
+      )
+    );
+  }, []);
+
+  const updateCartQty = useCallback((keyOrId, qty) => {
+    const nextQty = Math.max(1, Number(qty) || 1);
+    setCart((prev) =>
+      prev.map((i) =>
+        (i.cartKey ||
+          `${i.id}-${i.ribbon || ""}-${i.wrap || ""}-${i.cardText || ""}-${i.msg || ""}`) === keyOrId ||
+        i.id === keyOrId
+          ? { ...i, qty: nextQty }
+          : i
+      )
+    );
   }, []);
 
   const cartTotal = useMemo(
@@ -280,6 +312,7 @@ export function AppProvider({ children }) {
       cart,
       addToCart,
       removeFromCart,
+      updateCartQty,
       cartNotification,
       dismissCartNotification,
       cartTotal,
@@ -324,6 +357,7 @@ export function AppProvider({ children }) {
       addToCart,
       dismissCartNotification,
       removeFromCart,
+      updateCartQty,
     ]
   );
 

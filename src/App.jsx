@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
+import { WHATSAPP_NUMBER } from "./lib/env";
 
 import HomePage from "./pages/HomePage";
 import ShopPage from "./pages/ShopPage";
@@ -13,6 +14,7 @@ import AIImagePage from "./pages/AIImagePage";
 import CardBuilderPage from "./pages/CardBuilderPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import ContactPage from "./pages/ContactPage";
 import DashboardLoginPage from "./pages/DashboardLoginPage";
 import DashboardPage from "./pages/DashboardPage";
 
@@ -30,8 +32,8 @@ function Router() {
     page,
   } = useApp();
 
-  const whatsappNumber = process.env.REACT_APP_WHATSAPP_NUMBER || "963965578857";
-  const whatsappText = encodeURIComponent("أريد طلب باقة ورد");
+  const whatsappNumber = WHATSAPP_NUMBER;
+  const whatsappText = encodeURIComponent("Hello, I would like to order flowers from Soul Flower.");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
 
   const renderPage = () => {
@@ -52,6 +54,8 @@ function Router() {
         return <CartPage />;
       case "checkout":
         return <CheckoutPage />;
+      case "contact":
+        return <ContactPage />;
       case "dashboard-login":
         return authLoading ? <DashboardLoading /> : <DashboardLoginPage />;
       case "dashboard":

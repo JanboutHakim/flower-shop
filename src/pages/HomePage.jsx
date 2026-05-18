@@ -4,6 +4,7 @@ import { C, FS } from "../constants/theme";
 import Section from "../components/ui/Section";
 import Tag from "../components/ui/Tag";
 import ProductCard from "../components/product/ProductCard";
+import { FaCheck } from "react-icons/fa";
 
 function HomePage() {
   const { tr, navigate, products, setShopCategory, lang, categories } = useApp();
@@ -78,11 +79,23 @@ function HomePage() {
                 color: C.creamD,
                 fontSize: "1.05rem",
                 lineHeight: 1.8,
-                marginBottom: 38,
+                marginBottom: 14,
                 maxWidth: 460,
               }}
             >
               {tr.heroSub}
+            </p>
+
+            <p
+              style={{
+                color: C.accentL,
+                fontSize: ".92rem",
+                lineHeight: 1.7,
+                marginBottom: 28,
+                maxWidth: 500,
+              }}
+            >
+              {tr.heroLocalFresh}
             </p>
 
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
@@ -109,6 +122,37 @@ function HomePage() {
               >
                 {tr.cardBuilder}
               </button>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 10,
+                marginTop: 22,
+              }}
+            >
+              {[tr.freshDailyFlowers, tr.customBouquetDesign, tr.whatsappConfirmation].map(
+                (point) => (
+                  <div
+                    key={point}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      color: C.creamD,
+                      fontSize: ".78rem",
+                      border: `1px solid ${C.border}`,
+                      background: "rgba(255,255,255,.025)",
+                      padding: "8px 10px",
+                      borderRadius: 6,
+                    }}
+                  >
+                    <FaCheck style={{ color: C.accent, fontSize: 11 }} aria-hidden="true" />
+                    <span>{point}</span>
+                  </div>
+                )
+              )}
             </div>
           </div>
         </Section>
